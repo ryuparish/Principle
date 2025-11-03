@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model Media {
+  id           String   @id @default(uuid())
+  nodeId       String?
+  filename     String   @unique
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  width        Int?
+  height       Int?
+  url          String
+  thumbnailUrl String?
+  createdAt    DateTime @default(now())
+
+  @@index([nodeId])
+  @@index([filename])
+  @@map("media")
+}

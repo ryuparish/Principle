@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  postgres-nodes:
+    image: postgres:15
+    container_name: principle-postgres-nodes
+    environment:
+      POSTGRES_DB: principle_nodes_db
+      POSTGRES_USER: principle_user
+      POSTGRES_PASSWORD: principle_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-nodes-data:/var/lib/postgresql/data
+      - ./docker/init-nodes-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    command: postgres -c max_connections=100
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U principle_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-edges:
+    image: postgres:15
+    container_name: principle-postgres-edges
+    environment:
+      POSTGRES_DB: principle_edges_db
+      POSTGRES_USER: principle_user
+      POSTGRES_PASSWORD: principle_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-edges-data:/var/lib/postgresql/data
+      - ./docker/init-edges-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    command: postgres -c max_connections=100
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U principle_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-media:
+    image: postgres:15
+    container_name: principle-postgres-media
+    environment:
+      POSTGRES_DB: principle_media_db
+      POSTGRES_USER: principle_user
+      POSTGRES_PASSWORD: principle_pass
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-media-data:/var/lib/postgresql/data
+      - ./docker/init-media-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    command: postgres -c max_connections=100
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U principle_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: principle-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-nodes-data:
+  postgres-edges-data:
+  postgres-media-data:
+  redis-data:

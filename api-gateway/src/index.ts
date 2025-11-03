@@ -1,0 +1,53 @@
+import express, { Request, Response } from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
+import dotenv from 'dotenv';
+import mindmapRoutes from './routes/mindmap.routes';
+import nodeRoutes from './routes/node.routes';
+import edgeRoutes from './routes/edge.routes';
+import queueRoutes from './routes/queue.routes';
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(morgan('dev'));
+
+// Health check endpoint
+app.get('/health', (req: Request, res: Response) => {
+  res.json({
+    status: 'healthy',
+    service: 'api-gateway',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Root endpoint
+app.get('/', (req: Request, res: Response) => {
+  res.json({
+    message: 'Principle API Gateway',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      mindmaps: '/api/mindmaps',
+      nodes: '/api/nodes',
+      edges: '/api/edges',
+      queue: '/api/queue'
+    }
+  });
+});
+
+// API Routes
+app.use('/api/mindmaps', mindmapRoutes);
+app.use('/api/nodes', nodeRoutes);
+app.use('/api/edges', edgeRoutes);
+app.use('/api/queue', queueRoutes);
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`✅ API Gateway running on http://localhost:${PORT}`);
+});

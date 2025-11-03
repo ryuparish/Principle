@@ -1,0 +1,41 @@
+{
+  "name": "principle",
+  "version": "1.0.0",
+  "description": "Interactive world mindmap application",
+  "private": true,
+  "workspaces": [
+    "api-gateway",
+    "node-service",
+    "edge-service",
+    "media-service",
+    "ai-service",
+    "queue-service",
+    "client",
+    "shared"
+  ],
+  "scripts": {
+    "install:all": "npm install && npm run install:services && npm run install:client",
+    "install:services": "cd api-gateway && npm install && cd ../node-service && npm install && cd ../edge-service && npm install && cd ../media-service && npm install && cd ../ai-service && npm install && cd ../queue-service && npm install",
+    "install:client": "cd client && npm install",
+    "dev:all": "concurrently \"npm run dev:gateway\" \"npm run dev:node\" \"npm run dev:edge\" \"npm run dev:media\" \"npm run dev:ai\" \"npm run dev:queue\" \"npm run dev:client\"",
+    "dev:gateway": "cd api-gateway && npm run dev",
+    "dev:node": "cd node-service && npm run dev",
+    "dev:edge": "cd edge-service && npm run dev",
+    "dev:media": "cd media-service && npm run dev",
+    "dev:ai": "cd ai-service && npm run dev",
+    "dev:queue": "cd queue-service && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "prisma:generate": "cd node-service && npx prisma generate && cd ../edge-service && npx prisma generate && cd ../media-service && npx prisma generate",
+    "prisma:migrate": "cd node-service && npx prisma migrate dev && cd ../edge-service && npx prisma migrate dev && cd ../media-service && npx prisma migrate dev",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:reset": "docker-compose down -v && docker-compose up -d"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
