@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { MindmapNode } from '../../types';
 import { useMindmapStore } from '../../store/mindmapStore';
@@ -50,16 +50,7 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
     );
   }, [node]);
 
-  // Auto-save after 1 second of inactivity
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      handleSave();
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [title, content]);
-
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (isSaving) return;
 
     setIsSaving(true);
@@ -74,19 +65,37 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [isSaving, updateNode, node.id, title, content]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     handleSave();
     onClose();
-  };
+  }, [handleSave, onClose]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Close on Escape
-    if (e.key === 'Escape') {
-      handleClose();
-    }
-  };
+  // Global Escape key handler
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => document.removeEventListener('keydown', handleEscapeKey);
+  }, [isOpen, handleClose]);
+
+  // Auto-save after 1 second of inactivity
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleSave();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [title, content, handleSave]);
 
   if (!isOpen) return null;
 
@@ -95,7 +104,6 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
       <div
         className="modal-content"
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={handleKeyDown}
       >
         <div className="modal-header">
           <input

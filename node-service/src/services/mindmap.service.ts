@@ -1,6 +1,5 @@
-import { PrismaClient, Mindmap } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { Mindmap } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 
 export interface CreateMindmapInput {
   name: string;

@@ -1,6 +1,5 @@
-import { PrismaClient, Node } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { Node } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 
 export interface CreateNodeInput {
   mindmapId: string;

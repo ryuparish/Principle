@@ -21,6 +21,18 @@
   box-shadow: 0 4px 16px rgba(255, 107, 107, 0.3);
 }
 
+.custom-node.focused {
+  border-color: #00cc66;
+  box-shadow: 0 4px 16px rgba(0, 204, 102, 0.3);
+  background: #f0fff8;
+}
+
+.custom-node.insert-mode {
+  border-color: #ff9900;
+  box-shadow: 0 4px 16px rgba(255, 153, 0, 0.4);
+  background: #fff9f0;
+}
+
 .node-content {
   display: flex;
   align-items: center;
@@ -35,6 +47,18 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.node-title-input {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  padding: 0;
+  font-family: inherit;
 }
 
 .node-has-content-indicator {

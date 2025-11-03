@@ -1,6 +1,5 @@
-import { PrismaClient, Edge } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { Edge } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 
 export interface CreateEdgeInput {
   mindmapId: string;

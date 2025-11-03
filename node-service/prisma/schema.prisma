@@ -41,3 +41,19 @@ model Node {
   @@index([isDeleted])
   @@map("nodes")
 }
+
+model Edge {
+  id           String   @id @default(uuid())
+  mindmapId    String
+  sourceNodeId String
+  targetNodeId String
+  label        String?
+  style        Json     @default("{}")
+  createdAt    DateTime @default(now())
+
+  @@unique([sourceNodeId, targetNodeId])
+  @@index([mindmapId])
+  @@index([sourceNodeId])
+  @@index([targetNodeId])
+  @@map("edges")
+}

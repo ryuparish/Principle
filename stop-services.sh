@@ -54,13 +54,14 @@ for port in 3000 3001 3002 3003 3004 3005 5173 5174; do
 done
 echo ""
 
-# Optionally stop Docker containers
-read -p "Do you want to stop Docker containers? (y/N): " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
+# Optionally stop Docker containers (only if --docker flag is passed)
+if [[ "$1" == "--docker" ]]; then
     echo -e "${BLUE}Stopping Docker containers...${NC}"
     docker-compose down
     echo -e "${GREEN}✓ Docker containers stopped${NC}"
+else
+    echo -e "${BLUE}Note: Docker containers are still running${NC}"
+    echo -e "${BLUE}To stop them, run: ./stop-services.sh --docker${NC}"
 fi
 
 echo ""

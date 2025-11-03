@@ -8,6 +8,40 @@ datasource db {
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
+model Mindmap {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  viewport    Json     @default("{\"x\": 0, \"y\": 0, \"zoom\": 1}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  nodes       Node[]
+
+  @@map("mindmaps")
+}
+
+model Node {
+  id         String   @id @default(uuid())
+  mindmapId  String
+  title      String
+  content    Json     @default("{}")
+  position   Json
+  style      Json     @default("{}")
+  imageIds   String[] @default([])
+  tags       String[] @default([])
+  isDeleted  Boolean  @default(false)
+  deletedAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  mindmap    Mindmap  @relation(fields: [mindmapId], references: [id], onDelete: Cascade)
+
+  @@index([mindmapId])
+  @@index([title])
+  @@index([isDeleted])
+  @@map("nodes")
+}
+
 model Edge {
   id           String   @id @default(uuid())
   mindmapId    String

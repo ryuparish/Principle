@@ -7,7 +7,7 @@ import { positionQueue } from './services/queue.service';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3004;
+const PORT = process.env.PORT || 3005;
 
 // Middleware
 app.use(express.json());

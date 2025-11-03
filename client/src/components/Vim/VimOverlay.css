@@ -1,0 +1,86 @@
+.vim-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Focus highlight */
+.vim-focus-rect {
+  fill: none;
+  stroke: #4a90e2;
+  stroke-width: 4;
+  opacity: 0.8;
+  animation: focusPulse 1.5s ease-in-out infinite;
+}
+
+.vim-focus-rect-inner {
+  fill: none;
+  stroke: #4a90e2;
+  stroke-width: 2;
+  opacity: 0.4;
+}
+
+@keyframes focusPulse {
+  0%, 100% {
+    opacity: 0.8;
+    stroke-width: 4;
+  }
+  50% {
+    opacity: 1;
+    stroke-width: 5;
+  }
+}
+
+/* Selection highlight */
+.vim-selection-rect {
+  fill: rgba(255, 165, 2, 0.1);
+  stroke: #ffa502;
+  stroke-width: 2;
+  opacity: 0.7;
+}
+
+/* Edge mode preview line */
+.vim-edge-preview {
+  stroke: #ff6348;
+  stroke-width: 3;
+  opacity: 0.7;
+  animation: edgePreviewPulse 1s ease-in-out infinite;
+}
+
+@keyframes edgePreviewPulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+/* Edge edit mode styles */
+.vim-edge-edit {
+  stroke: #ffa502;
+  stroke-width: 3;
+  opacity: 0.6;
+}
+
+.vim-edge-edit-selected {
+  stroke: #ff3838;
+  stroke-width: 5;
+  opacity: 0.9;
+  animation: edgeEditPulse 1s ease-in-out infinite;
+}
+
+@keyframes edgeEditPulse {
+  0%, 100% {
+    opacity: 0.8;
+    stroke-width: 5;
+  }
+  50% {
+    opacity: 1;
+    stroke-width: 6;
+  }
+}

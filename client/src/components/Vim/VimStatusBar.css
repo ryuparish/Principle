@@ -1,0 +1,125 @@
+.vim-status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  background: #1e1e1e;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  z-index: 1000;
+  border-top: 2px solid #3c3c3c;
+  user-select: none;
+}
+
+.vim-status-left,
+.vim-status-center,
+.vim-status-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.vim-status-center {
+  justify-content: center;
+}
+
+.vim-status-right {
+  justify-content: flex-end;
+}
+
+.vim-mode-indicator {
+  font-weight: bold;
+  padding: 4px 12px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Mode-specific colors */
+.vim-mode-normal .vim-mode-indicator {
+  background: #4a90e2;
+  color: #ffffff;
+}
+
+.vim-mode-insert .vim-mode-indicator {
+  background: #7bed9f;
+  color: #2c3e50;
+}
+
+.vim-mode-visual .vim-mode-indicator {
+  background: #ffa502;
+  color: #2c3e50;
+}
+
+.vim-mode-edge .vim-mode-indicator {
+  background: #ff6348;
+  color: #ffffff;
+}
+
+.vim-mode-command .vim-mode-indicator {
+  background: #a29bfe;
+  color: #2c3e50;
+}
+
+.vim-command-buffer {
+  font-family: 'Courier New', monospace;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 12px;
+  border-radius: 4px;
+  min-width: 100px;
+  text-align: center;
+}
+
+.vim-edge-info {
+  color: #ff6348;
+  font-size: 12px;
+}
+
+.vim-info {
+  font-size: 12px;
+  color: #a0a0a0;
+}
+
+.vim-toggle-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vim-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.vim-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+/* Animation for mode changes */
+.vim-mode-indicator {
+  animation: modeChange 0.3s ease-in-out;
+}
+
+@keyframes modeChange {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

@@ -19,6 +19,10 @@ import { useMindmapStore } from '../../store/mindmapStore';
 import { queueApi } from '../../api/queue.api';
 import CustomNode from '../Node/CustomNode';
 import EdgeContextMenu from '../Edge/EdgeContextMenu';
+import { useKeyboardHandler } from '../../hooks/useKeyboardHandler';
+import VimStatusBar from '../Vim/VimStatusBar';
+import VimOverlay from '../Vim/VimOverlay';
+import { VimProvider } from '../../contexts/VimContext';
 
 const nodeTypes = {
   custom: CustomNode,
@@ -53,6 +57,17 @@ const MindMapCanvasInner: React.FC<MindMapCanvasProps> = ({ mindmapId }) => {
   const { project } = useReactFlow();
   const currentMindmapIdRef = React.useRef<string | null>(null);
   const draggedNodePositions = React.useRef<Map<string, { x: number; y: number }>>(new Map());
+
+  // Initialize vim mode
+  const { vim } = useKeyboardHandler();
+
+  // Auto-focus first node when nodes are loaded
+  useEffect(() => {
+    if (vim.state.enabled && !vim.state.focusedNodeId && nodes.length > 0) {
+      // Focus first node by default
+      vim.setFocus(nodes[0].id);
+    }
+  }, [nodes, vim]);
 
   // Load mindmap data when mindmapId changes
   useEffect(() => {
@@ -310,6 +325,7 @@ const MindMapCanvasInner: React.FC<MindMapCanvasProps> = ({ mindmapId }) => {
         <Controls />
         <MiniMap />
         <Background gap={12} size={1} />
+        <VimOverlay vimState={vim.state} />
       </ReactFlow>
 
       {edgeMenuState && (
@@ -320,15 +336,19 @@ const MindMapCanvasInner: React.FC<MindMapCanvasProps> = ({ mindmapId }) => {
           onClose={() => setEdgeMenuState(null)}
         />
       )}
+
+      <VimStatusBar vimState={vim.state} />
     </div>
   );
 };
 
 const MindMapCanvas: React.FC<MindMapCanvasProps> = (props) => {
   return (
-    <ReactFlowProvider>
-      <MindMapCanvasInner {...props} />
-    </ReactFlowProvider>
+    <VimProvider>
+      <ReactFlowProvider>
+        <MindMapCanvasInner {...props} />
+      </ReactFlowProvider>
+    </VimProvider>
   );
 };
 

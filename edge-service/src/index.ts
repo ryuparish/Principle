@@ -1,14 +1,13 @@
 import express, { Request, Response } from 'express';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './lib/prisma';
 import edgeRoutes from './routes/edge.routes';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3002;
-const prisma = new PrismaClient();
 
 // Middleware
 app.use(express.json());
