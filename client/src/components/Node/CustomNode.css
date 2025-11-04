@@ -43,7 +43,7 @@
 .node-title {
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: #1a1a1a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -52,7 +52,7 @@
 .node-title-input {
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: #1a1a1a;
   border: none;
   outline: none;
   background: transparent;

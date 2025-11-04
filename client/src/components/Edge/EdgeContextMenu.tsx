@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Edge } from 'reactflow';
-import { useMindmapStore } from '../../store/mindmapStore';
+import { useConceptMapStore } from "../../store/conceptMapStore";
 import './EdgeContextMenu.css';
 
 interface EdgeContextMenuProps {
@@ -16,7 +16,7 @@ const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
   y,
   onClose
 }) => {
-  const { updateEdge, deleteEdge } = useMindmapStore();
+  const { updateEdge, deleteEdge } = useConceptMapStore();
   const [label, setLabel] = useState(edge.label?.toString() || '');
 
   // Close on escape key

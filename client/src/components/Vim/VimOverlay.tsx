@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useReactFlow } from 'reactflow';
-import { useMindmapStore } from '../../store/mindmapStore';
+import { useConceptMapStore } from "../../store/conceptMapStore";
 import { VimState } from '../../types/vim.types';
 import './VimOverlay.css';
 
@@ -17,9 +17,45 @@ interface NodePosition {
 
 const VimOverlay: React.FC<VimOverlayProps> = ({ vimState }) => {
   const { getNodes, getZoom, getViewport } = useReactFlow();
-  const { edges } = useMindmapStore();
+  const { edges } = useConceptMapStore();
   const [focusedNodePos, setFocusedNodePos] = useState<NodePosition | null>(null);
   const [selectedNodesPos, setSelectedNodesPos] = useState<Map<string, NodePosition>>(new Map());
+
+  // Track viewport state for reactive updates
+  const [viewport, setViewport] = useState(() => getViewport());
+  const [zoom, setZoom] = useState(() => getZoom());
+  const [nodePositions, setNodePositions] = useState<Map<string, { x: number; y: number }>>(new Map());
+
+  // Update viewport and zoom on every render (these change frequently)
+  useEffect(() => {
+    const updateViewportState = () => {
+      setViewport(getViewport());
+      setZoom(getZoom());
+
+      // Also track node positions to detect drag events
+      const nodes = getNodes();
+      const positions = new Map();
+      nodes.forEach(node => {
+        positions.set(node.id, { x: node.position.x, y: node.position.y });
+      });
+      setNodePositions(positions);
+    };
+
+    // Initial update
+    updateViewportState();
+
+    // Use requestAnimationFrame for smooth tracking
+    let rafId: number;
+    const scheduleUpdate = () => {
+      updateViewportState();
+      rafId = requestAnimationFrame(scheduleUpdate);
+    };
+    rafId = requestAnimationFrame(scheduleUpdate);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [getNodes, getViewport, getZoom]);
 
   useEffect(() => {
     if (!vimState.enabled) {
@@ -29,8 +65,6 @@ const VimOverlay: React.FC<VimOverlayProps> = ({ vimState }) => {
     }
 
     const nodes = getNodes();
-    const zoom = getZoom();
-    const viewport = getViewport();
 
     // Update focused node position
     if (vimState.focusedNodeId) {
@@ -64,7 +98,7 @@ const VimOverlay: React.FC<VimOverlayProps> = ({ vimState }) => {
     });
     setSelectedNodesPos(newSelectedPos);
 
-  }, [vimState.focusedNodeId, vimState.selectedNodeIds, vimState.enabled, getNodes, getZoom, getViewport]);
+  }, [vimState.focusedNodeId, vimState.selectedNodeIds, vimState.enabled, viewport, zoom, nodePositions, getNodes]);
 
   if (!vimState.enabled) {
     return null;
@@ -111,8 +145,6 @@ const VimOverlay: React.FC<VimOverlayProps> = ({ vimState }) => {
       {vimState.edgeMode.active && vimState.edgeMode.sourceNodeId && (
         (() => {
           const nodes = getNodes();
-          const zoom = getZoom();
-          const viewport = getViewport();
 
           const sourceNode = nodes.find(n => n.id === vimState.edgeMode.sourceNodeId);
           const targetNode = vimState.edgeMode.targetNodeId
@@ -153,8 +185,6 @@ const VimOverlay: React.FC<VimOverlayProps> = ({ vimState }) => {
       {vimState.edgeEditMode.active && vimState.edgeEditMode.edgeIds.length > 0 && (
         (() => {
           const nodes = getNodes();
-          const zoom = getZoom();
-          const viewport = getViewport();
           const { edgeIds, selectedIndex } = vimState.edgeEditMode;
 
           return edgeIds.map((edgeId, index) => {

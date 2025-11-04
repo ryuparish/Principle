@@ -1,14 +1,14 @@
 import React, { useState, memo, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { MindmapNode } from '../../types';
+import { ConceptMapNode } from '../../types';
 import NodeEditorModal from './NodeEditorModal';
 import { useVim } from '../../contexts/VimContext';
-import { useMindmapStore } from '../../store/mindmapStore';
+import { useConceptMapStore } from "../../store/conceptMapStore";
 import './CustomNode.css';
 
 interface CustomNodeData {
   label: string;
-  node: MindmapNode;
+  node: ConceptMapNode;
 }
 
 const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, isConnectable, id }) => {
@@ -17,7 +17,7 @@ const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, isConnectable, 
   const [titleValue, setTitleValue] = useState(data.label);
   const inputRef = useRef<HTMLInputElement>(null);
   const vim = useVim();
-  const { updateNode } = useMindmapStore();
+  const { updateNode } = useConceptMapStore();
 
   // Check if this node is focused and in insert mode
   const isFocused = vim.state.focusedNodeId === id;

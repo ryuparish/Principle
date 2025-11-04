@@ -2,7 +2,7 @@ import { Edge } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 
 export interface CreateEdgeInput {
-  mindmapId: string;
+  conceptMapId: string;
   sourceNodeId: string;
   targetNodeId: string;
   label?: string;
@@ -15,9 +15,9 @@ export interface UpdateEdgeInput {
 }
 
 export class EdgeService {
-  async getEdgesByMindmap(mindmapId: string): Promise<Edge[]> {
+  async getEdgesByConceptMap(conceptMapId: string): Promise<Edge[]> {
     return prisma.edge.findMany({
-      where: { mindmapId },
+      where: { conceptMapId },
       orderBy: { createdAt: 'asc' }
     });
   }
@@ -31,7 +31,7 @@ export class EdgeService {
   async createEdge(data: CreateEdgeInput): Promise<Edge> {
     return prisma.edge.create({
       data: {
-        mindmapId: data.mindmapId,
+        conceptMapId: data.conceptMapId,
         sourceNodeId: data.sourceNodeId,
         targetNodeId: data.targetNodeId,
         label: data.label,

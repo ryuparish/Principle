@@ -9,19 +9,19 @@ export interface Viewport {
   zoom: number;
 }
 
-export interface Mindmap {
+export interface ConceptMap {
   id: string;
   name: string;
   description?: string;
   viewport: Viewport;
   createdAt: string;
   updatedAt: string;
-  nodes?: MindmapNode[];
+  nodes?: ConceptMapNode[];
 }
 
-export interface MindmapNode {
+export interface ConceptMapNode {
   id: string;
-  mindmapId: string;
+  conceptMapId: string;
   title: string;
   content: any;
   position: Position;
@@ -33,13 +33,13 @@ export interface MindmapNode {
   updatedAt: string;
 }
 
-export interface CreateMindmapInput {
+export interface CreateConceptMapInput {
   name: string;
   description?: string;
 }
 
 export interface CreateNodeInput {
-  mindmapId: string;
+  conceptMapId: string;
   title: string;
   position: Position;
   content?: any;
@@ -61,9 +61,9 @@ export interface EdgeStyle {
   type?: 'default' | 'straight' | 'step' | 'smoothstep';
 }
 
-export interface MindmapEdge {
+export interface ConceptMapEdge {
   id: string;
-  mindmapId: string;
+  conceptMapId: string;
   sourceNodeId: string;
   targetNodeId: string;
   label?: string;
@@ -72,7 +72,7 @@ export interface MindmapEdge {
 }
 
 export interface CreateEdgeInput {
-  mindmapId: string;
+  conceptMapId: string;
   sourceNodeId: string;
   targetNodeId: string;
   label?: string;
@@ -82,4 +82,19 @@ export interface CreateEdgeInput {
 export interface UpdateEdgeInput {
   label?: string;
   style?: EdgeStyle;
+}
+
+export interface Media {
+  id: string;
+  nodeId?: string;
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  width: number;
+  height: number;
+  url: string;
+  thumbnailUrl: string;
+  createdAt: string;
+  updatedAt: string;
 }

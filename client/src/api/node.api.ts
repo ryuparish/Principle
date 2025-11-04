@@ -1,25 +1,25 @@
 import { apiClient } from './client';
-import { MindmapNode, CreateNodeInput, UpdateNodeInput } from '../types';
+import { ConceptMapNode, CreateNodeInput, UpdateNodeInput } from '../types';
 
 export const nodeApi = {
-  getByMindmap: async (mindmapId: string): Promise<MindmapNode[]> => {
+  getByConceptMap: async (conceptMapId: string): Promise<ConceptMapNode[]> => {
     const response = await apiClient.get('/nodes', {
-      params: { mindmapId }
+      params: { mindmapId: conceptMapId }
     });
     return response.data.nodes;
   },
 
-  getById: async (id: string): Promise<MindmapNode> => {
+  getById: async (id: string): Promise<ConceptMapNode> => {
     const response = await apiClient.get(`/nodes/${id}`);
     return response.data;
   },
 
-  create: async (data: CreateNodeInput): Promise<MindmapNode> => {
+  create: async (data: CreateNodeInput): Promise<ConceptMapNode> => {
     const response = await apiClient.post('/nodes', data);
     return response.data;
   },
 
-  update: async (id: string, data: UpdateNodeInput): Promise<MindmapNode> => {
+  update: async (id: string, data: UpdateNodeInput): Promise<ConceptMapNode> => {
     const response = await apiClient.patch(`/nodes/${id}`, data);
     return response.data;
   },
@@ -28,9 +28,9 @@ export const nodeApi = {
     await apiClient.delete(`/nodes/${id}`);
   },
 
-  search: async (mindmapId: string, query: string): Promise<MindmapNode[]> => {
+  search: async (conceptMapId: string, query: string): Promise<ConceptMapNode[]> => {
     const response = await apiClient.get('/nodes/search', {
-      params: { mindmapId, q: query }
+      params: { mindmapId: conceptMapId, q: query }
     });
     return response.data.results;
   }

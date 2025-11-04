@@ -14,7 +14,7 @@
   flex-wrap: wrap;
   gap: 4px;
   padding: 8px;
-  background: #f5f5f5;
+  background: #fafafa;
   border-bottom: 1px solid #e0e0e0;
   align-items: center;
 }
@@ -40,13 +40,13 @@
   font-size: 14px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   transition: all 0.15s ease;
-  color: #333;
+  color: #1a1a1a;
   min-width: 32px;
 }
 
 .menu-bar button:hover:not(:disabled) {
-  background: #e8e8e8;
-  border-color: #d0d0d0;
+  background: #f0f0f0;
+  border-color: #e0e0e0;
 }
 
 .menu-bar button.is-active {
@@ -78,6 +78,7 @@
   font-size: 16px;
   line-height: 1.6;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1a1a1a;
 }
 
 /* TipTap content styles */
@@ -112,16 +113,25 @@
   margin: 0.5em 0;
 }
 
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+}
+
 .ProseMirror li {
   margin: 0.25em 0;
+  display: list-item;
 }
 
 .ProseMirror blockquote {
-  border-left: 3px solid #0066cc;
+  border-left: 3px solid #4a4a4a;
   padding-left: 1em;
   margin-left: 0;
   margin-right: 0;
-  color: #666;
+  color: #4a4a4a;
   font-style: italic;
 }
 

@@ -14,7 +14,7 @@ export const prisma = global.prisma || new PrismaClient({
 });
 
 console.log('[PRISMA] Prisma Client initialized:', !!prisma);
-console.log('[PRISMA] Prisma.mindmap exists:', !!prisma.mindmap);
+console.log('[PRISMA] Prisma.conceptMap exists:', !!(prisma as any).conceptMap);
 
 if (process.env.NODE_ENV !== 'production') {
   global.prisma = prisma;

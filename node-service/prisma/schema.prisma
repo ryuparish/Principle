@@ -8,7 +8,7 @@ datasource db {
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
-model Mindmap {
+model ConceptMap {
   id          String   @id @default(uuid())
   name        String
   description String?
@@ -21,38 +21,38 @@ model Mindmap {
 }
 
 model Node {
-  id         String   @id @default(uuid())
-  mindmapId  String
-  title      String
-  content    Json     @default("{}")
-  position   Json
-  style      Json     @default("{}")
-  imageIds   String[] @default([])
-  tags       String[] @default([])
-  isDeleted  Boolean  @default(false)
-  deletedAt  DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String     @id @default(uuid())
+  conceptMapId  String     @map("mindmapId")
+  title         String
+  content       Json       @default("{}")
+  position      Json
+  style         Json       @default("{}")
+  imageIds      String[]   @default([])
+  tags          String[]   @default([])
+  isDeleted     Boolean    @default(false)
+  deletedAt     DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
-  mindmap    Mindmap  @relation(fields: [mindmapId], references: [id], onDelete: Cascade)
+  conceptMap    ConceptMap @relation(fields: [conceptMapId], references: [id], onDelete: Cascade)
 
-  @@index([mindmapId])
+  @@index([conceptMapId], map: "Node_mindmapId_idx")
   @@index([title])
   @@index([isDeleted])
   @@map("nodes")
 }
 
 model Edge {
-  id           String   @id @default(uuid())
-  mindmapId    String
-  sourceNodeId String
-  targetNodeId String
-  label        String?
-  style        Json     @default("{}")
-  createdAt    DateTime @default(now())
+  id            String   @id @default(uuid())
+  conceptMapId  String   @map("mindmapId")
+  sourceNodeId  String
+  targetNodeId  String
+  label         String?
+  style         Json     @default("{}")
+  createdAt     DateTime @default(now())
 
   @@unique([sourceNodeId, targetNodeId])
-  @@index([mindmapId])
+  @@index([conceptMapId], map: "Edge_mindmapId_idx")
   @@index([sourceNodeId])
   @@index([targetNodeId])
   @@map("edges")

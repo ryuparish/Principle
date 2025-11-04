@@ -2,7 +2,7 @@ import { Node } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 
 export interface CreateNodeInput {
-  mindmapId: string;
+  conceptMapId: string;
   title: string;
   content?: any;
   position: {
@@ -25,10 +25,10 @@ export interface UpdateNodeInput {
 }
 
 export class NodeService {
-  async getNodesByMindmap(mindmapId: string): Promise<Node[]> {
+  async getNodesByConceptMap(conceptMapId: string): Promise<Node[]> {
     return prisma.node.findMany({
       where: {
-        mindmapId,
+        conceptMapId,
         isDeleted: false
       },
       orderBy: { createdAt: 'asc' }
@@ -44,7 +44,7 @@ export class NodeService {
   async createNode(data: CreateNodeInput): Promise<Node> {
     return prisma.node.create({
       data: {
-        mindmapId: data.mindmapId,
+        conceptMapId: data.conceptMapId,
         title: data.title,
         content: data.content || {},
         position: data.position,
@@ -78,10 +78,10 @@ export class NodeService {
     });
   }
 
-  async searchNodes(mindmapId: string, query: string): Promise<Node[]> {
+  async searchNodes(conceptMapId: string, query: string): Promise<Node[]> {
     return prisma.node.findMany({
       where: {
-        mindmapId,
+        conceptMapId,
         isDeleted: false,
         OR: [
           { title: { contains: query, mode: 'insensitive' } },

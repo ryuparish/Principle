@@ -1,5 +1,5 @@
 import { Node } from 'reactflow';
-import { MindmapEdge } from '../types';
+import { ConceptMapEdge } from '../types';
 
 /**
  * Navigation engine for graph traversal
@@ -7,37 +7,81 @@ import { MindmapEdge } from '../types';
  */
 
 /**
- * Calculate minimum distance between two rectangles
- * Returns 0 if rectangles overlap
+ * Calculate Euclidean distance between two points
  */
-const getMinRectDistance = (
-  rect1: { x: number; y: number; width: number; height: number },
-  rect2: { x: number; y: number; width: number; height: number }
+const euclideanDistance = (
+  point1: { x: number; y: number },
+  point2: { x: number; y: number }
 ): number => {
-  // Calculate the horizontal distance between rectangles
-  let dx = 0;
-  if (rect1.x + rect1.width < rect2.x) {
-    // rect1 is to the left of rect2
-    dx = rect2.x - (rect1.x + rect1.width);
-  } else if (rect2.x + rect2.width < rect1.x) {
-    // rect1 is to the right of rect2
-    dx = rect1.x - (rect2.x + rect2.width);
-  }
-  // else rectangles overlap horizontally, dx = 0
-
-  // Calculate the vertical distance between rectangles
-  let dy = 0;
-  if (rect1.y + rect1.height < rect2.y) {
-    // rect1 is above rect2
-    dy = rect2.y - (rect1.y + rect1.height);
-  } else if (rect2.y + rect2.height < rect1.y) {
-    // rect1 is below rect2
-    dy = rect1.y - (rect2.y + rect2.height);
-  }
-  // else rectangles overlap vertically, dy = 0
-
-  // Return Euclidean distance between closest points
+  const dx = point2.x - point1.x;
+  const dy = point2.y - point1.y;
   return Math.sqrt(dx * dx + dy * dy);
+};
+
+/**
+ * Find the closest point on a rectangle's perimeter to a given point
+ */
+const closestPointOnRect = (
+  point: { x: number; y: number },
+  rect: { x: number; y: number; width: number; height: number }
+): { x: number; y: number } => {
+  // Clamp the point coordinates to the rectangle bounds
+  const closestX = Math.max(rect.x, Math.min(point.x, rect.x + rect.width));
+  const closestY = Math.max(rect.y, Math.min(point.y, rect.y + rect.height));
+
+  return { x: closestX, y: closestY };
+};
+
+/**
+ * Calculate angle from point1 to point2 in radians
+ * Returns angle in range [-π, π] where:
+ * - 0 = right (east)
+ * - π/2 = down (south)
+ * - ±π = left (west)
+ * - -π/2 = up (north)
+ */
+const getAngleBetweenPoints = (
+  point1: { x: number; y: number },
+  point2: { x: number; y: number }
+): number => {
+  const dx = point2.x - point1.x;
+  const dy = point2.y - point1.y;
+  return Math.atan2(dy, dx);
+};
+
+/**
+ * Check if an angle falls within a directional sector
+ * Each sector is 180° wide (±90° from cardinal direction)
+ * This creates full hemisphere coverage in each direction
+ */
+const isInAngularSector = (
+  angle: number,
+  direction: 'left' | 'right' | 'up' | 'down'
+): boolean => {
+  const PI = Math.PI;
+  const HALF_PI = PI / 2; // 90 degrees
+
+  switch (direction) {
+    case 'right':
+      // Accept angles from -90° to +90° (east-facing hemisphere)
+      return angle >= -HALF_PI && angle <= HALF_PI;
+
+    case 'down':
+      // Accept angles from 0° to +180° (south-facing hemisphere)
+      return angle >= 0 && angle <= PI;
+
+    case 'left':
+      // Accept angles from +90° to -90° (west-facing hemisphere)
+      // This wraps around ±π, so we check if angle is in either range
+      return angle >= HALF_PI || angle <= -HALF_PI;
+
+    case 'up':
+      // Accept angles from -180° to 0° (north-facing hemisphere)
+      return angle >= -PI && angle <= 0;
+
+    default:
+      return false;
+  }
 };
 
 // Find node in a specific spatial direction
@@ -56,6 +100,45 @@ export const findNodeInDirection = (
     height: currentNode.height || 60
   };
 
+  // Determine the starting point on the current node based on direction
+  let startPoint: { x: number; y: number };
+  switch (direction) {
+    case 'left':
+      // Start from leftmost center
+      startPoint = {
+        x: currentRect.x,
+        y: currentRect.y + currentRect.height / 2
+      };
+      break;
+    case 'right':
+      // Start from rightmost center
+      startPoint = {
+        x: currentRect.x + currentRect.width,
+        y: currentRect.y + currentRect.height / 2
+      };
+      break;
+    case 'up':
+      // Start from topmost center
+      startPoint = {
+        x: currentRect.x + currentRect.width / 2,
+        y: currentRect.y
+      };
+      break;
+    case 'down':
+      // Start from bottommost center
+      startPoint = {
+        x: currentRect.x + currentRect.width / 2,
+        y: currentRect.y + currentRect.height
+      };
+      break;
+  }
+
+  // Calculate the center of the current node for angular calculations
+  const currentCenter = {
+    x: currentRect.x + currentRect.width / 2,
+    y: currentRect.y + currentRect.height / 2
+  };
+
   let candidates: { id: string; distance: number }[] = [];
 
   nodes.forEach(node => {
@@ -68,31 +151,24 @@ export const findNodeInDirection = (
       height: node.height || 60
     };
 
-    // Check if node is strictly in the specified direction
-    // We check based on the rectangles' positions
-    let isInDirection = false;
-    switch (direction) {
-      case 'right':
-        // Node is to the right if its left edge is past current's right edge
-        isInDirection = nodeRect.x > currentRect.x + currentRect.width;
-        break;
-      case 'left':
-        // Node is to the left if its right edge is before current's left edge
-        isInDirection = nodeRect.x + nodeRect.width < currentRect.x;
-        break;
-      case 'down':
-        // Node is below if its top edge is past current's bottom edge
-        isInDirection = nodeRect.y > currentRect.y + currentRect.height;
-        break;
-      case 'up':
-        // Node is above if its bottom edge is before current's top edge
-        isInDirection = nodeRect.y + nodeRect.height < currentRect.y;
-        break;
-    }
+    // Calculate the center of the candidate node
+    const nodeCenter = {
+      x: nodeRect.x + nodeRect.width / 2,
+      y: nodeRect.y + nodeRect.height / 2
+    };
+
+    // Calculate angle from current node center to candidate node center
+    const angle = getAngleBetweenPoints(currentCenter, nodeCenter);
+
+    // Check if the candidate is in the correct angular sector for this direction
+    const isInDirection = isInAngularSector(angle, direction);
 
     if (isInDirection) {
-      // Calculate minimum distance between the two rectangles
-      const distance = getMinRectDistance(currentRect, nodeRect);
+      // Find the closest point on the candidate node's rectangle to our start point
+      const closestPoint = closestPointOnRect(startPoint, nodeRect);
+
+      // Calculate Euclidean distance from start point to closest point on candidate
+      const distance = euclideanDistance(startPoint, closestPoint);
       candidates.push({ id: node.id, distance });
     }
   });
@@ -107,7 +183,7 @@ export const findNodeInDirection = (
 // Find connected nodes (following edges)
 export const findConnectedNodes = (
   currentNodeId: string,
-  edges: MindmapEdge[],
+  edges: ConceptMapEdge[],
   direction: 'outgoing' | 'incoming' | 'both'
 ): string[] => {
   const connected: string[] = [];
@@ -131,7 +207,7 @@ export const findConnectedNodes = (
 // Find next/previous connected node (for Tab navigation)
 export const findNextConnectedNode = (
   currentNodeId: string,
-  edges: MindmapEdge[],
+  edges: ConceptMapEdge[],
   reverse: boolean = false
 ): string | null => {
   const connected = findConnectedNodes(currentNodeId, edges, 'both');
@@ -179,7 +255,7 @@ export const findLastNode = (nodes: Node[]): string | null => {
 // Find parent nodes (nodes with edges pointing to current)
 export const findParentNodes = (
   currentNodeId: string,
-  edges: MindmapEdge[]
+  edges: ConceptMapEdge[]
 ): string[] => {
   return findConnectedNodes(currentNodeId, edges, 'incoming');
 };
@@ -187,7 +263,7 @@ export const findParentNodes = (
 // Find child nodes (nodes current points to)
 export const findChildNodes = (
   currentNodeId: string,
-  edges: MindmapEdge[]
+  edges: ConceptMapEdge[]
 ): string[] => {
   return findConnectedNodes(currentNodeId, edges, 'outgoing');
 };
@@ -195,7 +271,7 @@ export const findChildNodes = (
 // Find all nodes in a subtree (current + all descendants)
 export const findSubtreeNodes = (
   rootNodeId: string,
-  edges: MindmapEdge[],
+  edges: ConceptMapEdge[],
   maxDepth: number = 100
 ): string[] => {
   const visited = new Set<string>();

@@ -15,37 +15,38 @@ import ReactFlow, {
   ReactFlowProvider,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { useMindmapStore } from '../../store/mindmapStore';
+import { useConceptMapStore } from "../../store/conceptMapStore";
 import { queueApi } from '../../api/queue.api';
 import CustomNode from '../Node/CustomNode';
 import EdgeContextMenu from '../Edge/EdgeContextMenu';
 import { useKeyboardHandler } from '../../hooks/useKeyboardHandler';
 import VimStatusBar from '../Vim/VimStatusBar';
 import VimOverlay from '../Vim/VimOverlay';
+import EdgeLabelEditor from '../Vim/EdgeLabelEditor';
 import { VimProvider } from '../../contexts/VimContext';
 
 const nodeTypes = {
   custom: CustomNode,
 };
 
-interface MindMapCanvasProps {
-  mindmapId: string;
+interface ConceptMapCanvasProps {
+  conceptMapId: string;
 }
 
-const MindMapCanvasInner: React.FC<MindMapCanvasProps> = ({ mindmapId }) => {
+const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }) => {
   const {
     nodes: storeNodes,
     edges: storeEdges,
     loading,
-    currentMindmap,
-    loadMindmap,
+    currentConceptMap,
+    loadConceptMap,
     loadEdges,
     createNode,
     updateNodeLocal,
     deleteNodes,
     createEdge,
     deleteEdge
-  } = useMindmapStore();
+  } = useConceptMapStore();
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
@@ -55,7 +56,7 @@ const MindMapCanvasInner: React.FC<MindMapCanvasProps> = ({ mindmapId }) => {
     y: number;
   } | null>(null);
   const { project } = useReactFlow();
-  const currentMindmapIdRef = React.useRef<string | null>(null);
+  const currentConceptMapIdRef = React.useRef<string | null>(null);
   const draggedNodePositions = React.useRef<Map<string, { x: number; y: number }>>(new Map());
 
   // Initialize vim mode
@@ -69,11 +70,11 @@ const MindMapCanvasInner: React.FC<MindMapCanvasProps> = ({ mindmapId }) => {
     }
   }, [nodes, vim]);
 
-  // Load mindmap data when mindmapId changes
+  // Load concept map data when conceptMapId changes
   useEffect(() => {
-    loadMindmap(mindmapId);
-    loadEdges(mindmapId);
-  }, [mindmapId, loadMindmap, loadEdges]);
+    loadConceptMap(conceptMapId);
+    loadEdges(conceptMapId);
+  }, [conceptMapId, loadConceptMap, loadEdges]);
 
   // Sync store nodes to React Flow
   useEffect(() => {
@@ -82,15 +83,15 @@ const MindMapCanvasInner: React.FC<MindMapCanvasProps> = ({ mindmapId }) => {
       return;
     }
 
-    // Don't sync if store has data for a different mindmap (global store persists across mounts)
-    if (currentMindmap?.id !== mindmapId) {
+    // Don't sync if store has data for a different concept map (global store persists across mounts)
+    if (currentConceptMap?.id !== conceptMapId) {
       return;
     }
 
-    // Check if mindmap changed (explicit reload)
-    const mindmapChanged = currentMindmapIdRef.current !== mindmapId;
-    if (mindmapChanged) {
-      currentMindmapIdRef.current = mindmapId;
+    // Check if concept map changed (explicit reload)
+    const conceptMapChanged = currentConceptMapIdRef.current !== conceptMapId;
+    if (conceptMapChanged) {
+      currentConceptMapIdRef.current = conceptMapId;
     }
 
     setNodes((currentNodes) => {
@@ -121,8 +122,8 @@ const MindMapCanvasInner: React.FC<MindMapCanvasProps> = ({ mindmapId }) => {
         currentIds.size !== storeIds.size ||
         !Array.from(storeIds).every(id => currentIds.has(id));
 
-      // Only sync positions if mindmap changed OR IDs changed (add/delete)
-      if (mindmapChanged || idsChanged) {
+      // Only sync positions if concept map changed OR IDs changed (add/delete)
+      if (conceptMapChanged || idsChanged) {
         return storeNodes.map((node) => ({
           id: node.id,
           type: 'custom',
@@ -149,7 +150,7 @@ const MindMapCanvasInner: React.FC<MindMapCanvasProps> = ({ mindmapId }) => {
         };
       });
     });
-  }, [storeNodes, mindmapId, loading, currentMindmap]);
+  }, [storeNodes, conceptMapId, loading, currentConceptMap]);
 
   // Convert store edges to React Flow edges
   useEffect(() => {
@@ -337,19 +338,23 @@ const MindMapCanvasInner: React.FC<MindMapCanvasProps> = ({ mindmapId }) => {
         />
       )}
 
+      {vim.state.edgeLabelEditorId && (
+        <EdgeLabelEditor edgeId={vim.state.edgeLabelEditorId} />
+      )}
+
       <VimStatusBar vimState={vim.state} />
     </div>
   );
 };
 
-const MindMapCanvas: React.FC<MindMapCanvasProps> = (props) => {
+const ConceptMapCanvas: React.FC<ConceptMapCanvasProps> = (props) => {
   return (
     <VimProvider>
       <ReactFlowProvider>
-        <MindMapCanvasInner {...props} />
+        <ConceptMapCanvasInner {...props} />
       </ReactFlowProvider>
     </VimProvider>
   );
 };
 
-export default MindMapCanvas;
+export default ConceptMapCanvas;

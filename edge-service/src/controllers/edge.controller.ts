@@ -2,15 +2,15 @@ import { Request, Response } from 'express';
 import { edgeService } from '../services/edge.service';
 
 export class EdgeController {
-  async getByMindmap(req: Request, res: Response) {
+  async getByConceptMap(req: Request, res: Response) {
     try {
-      const { mindmapId } = req.query;
+      const { conceptMapId } = req.query;
 
-      if (!mindmapId || typeof mindmapId !== 'string') {
-        return res.status(400).json({ error: 'mindmapId query parameter is required' });
+      if (!conceptMapId || typeof conceptMapId !== 'string') {
+        return res.status(400).json({ error: 'conceptMapId query parameter is required' });
       }
 
-      const edges = await edgeService.getEdgesByMindmap(mindmapId);
+      const edges = await edgeService.getEdgesByConceptMap(conceptMapId);
       res.json({ edges });
     } catch (error) {
       console.error('Error fetching edges:', error);
@@ -36,11 +36,11 @@ export class EdgeController {
 
   async create(req: Request, res: Response) {
     try {
-      const { mindmapId, sourceNodeId, targetNodeId, label, style } = req.body;
+      const { conceptMapId, sourceNodeId, targetNodeId, label, style } = req.body;
 
       // Validation
-      if (!mindmapId) {
-        return res.status(400).json({ error: 'mindmapId is required' });
+      if (!conceptMapId) {
+        return res.status(400).json({ error: 'conceptMapId is required' });
       }
       if (!sourceNodeId) {
         return res.status(400).json({ error: 'sourceNodeId is required' });
@@ -50,7 +50,7 @@ export class EdgeController {
       }
 
       const edge = await edgeService.createEdge({
-        mindmapId,
+        conceptMapId,
         sourceNodeId,
         targetNodeId,
         label,

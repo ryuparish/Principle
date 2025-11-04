@@ -1,12 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { MindmapNode } from '../../types';
-import { useMindmapStore } from '../../store/mindmapStore';
+import { ConceptMapNode, Media } from '../../types';
+import { useConceptMapStore } from "../../store/conceptMapStore";
 import TipTapEditor from '../Editor/TipTapEditor';
+import { ImageUploader } from '../ImageUploader/ImageUploader';
+import { ImageGallery } from '../ImageGallery/ImageGallery';
+import { ImageLightbox } from '../ImageLightbox/ImageLightbox';
 import './NodeEditorModal.css';
 
 interface NodeEditorModalProps {
-  node: MindmapNode;
+  node: ConceptMapNode;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -30,7 +33,9 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
   isOpen,
   onClose
 }) => {
-  const { updateNode } = useMindmapStore();
+  const { updateNode, loadNodeMedia, deleteMedia, uploadMedia } = useConceptMapStore();
+  const nodeMedia = useConceptMapStore((state) => state.media[node.id] || []);
+
   const [title, setTitle] = useState(node.title);
   const [content, setContent] = useState(
     isValidTipTapContent(node.content)
@@ -39,6 +44,29 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  // Refs to track latest values without causing re-renders
+  const titleRef = useRef(title);
+  const contentRef = useRef(content);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveMessageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isSavingRef = useRef(false);
+  const updateNodeRef = useRef(updateNode);
+
+  // Update refs when state changes
+  useEffect(() => {
+    titleRef.current = title;
+  }, [title]);
+
+  useEffect(() => {
+    contentRef.current = content;
+  }, [content]);
+
+  useEffect(() => {
+    updateNodeRef.current = updateNode;
+  }, [updateNode]);
 
   // Update local state when node prop changes
   useEffect(() => {
@@ -50,27 +78,114 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
     );
   }, [node]);
 
-  const handleSave = useCallback(async () => {
-    if (isSaving) return;
+  // Load media when modal opens
+  useEffect(() => {
+    if (isOpen && node.id) {
+      loadNodeMedia(node.id);
+    }
+  }, [isOpen, node.id, loadNodeMedia]);
 
+  // Completely stable save function - no dependencies that change
+  const performSaveRef = useRef(async (showMessage = true) => {
+    // Skip if already saving
+    if (isSavingRef.current) return;
+
+    isSavingRef.current = true;
     setIsSaving(true);
     try {
-      await updateNode(node.id, { title, content });
-      setSaveMessage('Saved');
-      setTimeout(() => setSaveMessage(null), 2000);
+      // Read from refs to get latest values
+      await updateNodeRef.current(node.id, {
+        title: titleRef.current,
+        content: contentRef.current
+      });
+
+      if (showMessage) {
+        // Clear any existing message timeout
+        if (saveMessageTimeoutRef.current) {
+          clearTimeout(saveMessageTimeoutRef.current);
+          saveMessageTimeoutRef.current = null;
+        }
+
+        // Only show message if not already showing to prevent bounce effect
+        setSaveMessage((currentMessage) => {
+          if (currentMessage === 'Saved') {
+            // Already showing, just extend the timeout
+            saveMessageTimeoutRef.current = setTimeout(() => {
+              setSaveMessage(null);
+              saveMessageTimeoutRef.current = null;
+            }, 2000);
+            return currentMessage;
+          }
+
+          // Show new message
+          saveMessageTimeoutRef.current = setTimeout(() => {
+            setSaveMessage(null);
+            saveMessageTimeoutRef.current = null;
+          }, 2000);
+          return 'Saved';
+        });
+      }
     } catch (error) {
       console.error('Failed to save node:', error);
+
+      // Clear any existing timeout
+      if (saveMessageTimeoutRef.current) {
+        clearTimeout(saveMessageTimeoutRef.current);
+        saveMessageTimeoutRef.current = null;
+      }
+
       setSaveMessage('Error saving');
-      setTimeout(() => setSaveMessage(null), 3000);
+      saveMessageTimeoutRef.current = setTimeout(() => {
+        setSaveMessage(null);
+        saveMessageTimeoutRef.current = null;
+      }, 3000);
     } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
     }
-  }, [isSaving, updateNode, node.id, title, content]);
+  });
+
+  const performSave = useCallback((showMessage = true) => {
+    return performSaveRef.current(showMessage);
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    if (isSaving) return;
+    await performSave();
+  }, [isSaving, performSave]);
 
   const handleClose = useCallback(() => {
     handleSave();
     onClose();
   }, [handleSave, onClose]);
+
+  const handleImageUpload = async (file: File) => {
+    try {
+      await uploadMedia(file, node.id);
+      setSaveMessage('Image uploaded');
+      setTimeout(() => setSaveMessage(null), 2000);
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      setSaveMessage('Error uploading image');
+      setTimeout(() => setSaveMessage(null), 3000);
+    }
+  };
+
+  const handleImageUploadError = (error: string) => {
+    setSaveMessage(`Error: ${error}`);
+    setTimeout(() => setSaveMessage(null), 3000);
+  };
+
+  const handleImageClick = (media: Media, index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const handleImageDelete = async (mediaId: string) => {
+    await deleteMedia(mediaId, node.id);
+    setSaveMessage('Image deleted');
+    setTimeout(() => setSaveMessage(null), 2000);
+  };
 
   // Global Escape key handler
   useEffect(() => {
@@ -78,6 +193,10 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
 
     const handleEscapeKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // If lightbox is open, let it handle Escape instead
+        if (lightboxOpen) {
+          return;
+        }
         e.preventDefault();
         e.stopPropagation();
         handleClose();
@@ -86,68 +205,102 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
 
     document.addEventListener('keydown', handleEscapeKey);
     return () => document.removeEventListener('keydown', handleEscapeKey);
-  }, [isOpen, handleClose]);
+  }, [isOpen, lightboxOpen, handleClose]);
 
   // Auto-save after 1 second of inactivity
   useEffect(() => {
-    const timer = setTimeout(() => {
-      handleSave();
+    // Clear any existing save timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Set new save timeout
+    saveTimeoutRef.current = setTimeout(() => {
+      performSave();
+      saveTimeoutRef.current = null;
     }, 1000);
 
-    return () => clearTimeout(timer);
-  }, [title, content, handleSave]);
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+    };
+  }, [title, content, performSave]);
 
   if (!isOpen) return null;
 
   const modalContent = (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div
-        className="modal-content"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="modal-header">
-          <input
-            type="text"
-            className="node-title-input"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Node Title"
-            autoFocus
-          />
-          <div className="modal-actions">
-            {saveMessage && (
-              <span className={`save-message ${saveMessage.includes('Error') ? 'error' : 'success'}`}>
-                {saveMessage}
+    <>
+      <div className="modal-overlay" onClick={handleClose}>
+        <div
+          className="modal-content"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="modal-header">
+            <input
+              type="text"
+              className="node-title-input"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Node Title"
+              autoFocus
+            />
+            <div className="modal-actions">
+              <button className="close-button" onClick={handleClose}>
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <div className="modal-body">
+            <TipTapEditor
+              content={content}
+              onChange={setContent}
+              placeholder="Write your notes here..."
+            />
+
+            <div className="images-section">
+              <div className="images-row">
+                <span className="images-label">Images:</span>
+                <ImageUploader
+                  nodeId={node.id}
+                  onUploadSuccess={handleImageUpload}
+                  onUploadError={handleImageUploadError}
+                />
+                {nodeMedia.length > 0 && (
+                  <ImageGallery
+                    media={nodeMedia}
+                    onImageClick={handleImageClick}
+                    onImageDelete={handleImageDelete}
+                    showDelete={true}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="modal-footer">
+            <div className="footer-info">
+              <span className="node-id">ID: {node.id}</span>
+              <span className="last-updated">
+                Updated: {new Date(node.updatedAt).toLocaleString()}
               </span>
-            )}
-            {isSaving && <span className="saving-indicator">Saving...</span>}
-            <button className="close-button" onClick={handleClose}>
-              ✕
+            </div>
+            <button className="save-close-button" onClick={handleClose}>
+              Save & Close
             </button>
           </div>
         </div>
-
-        <div className="modal-body">
-          <TipTapEditor
-            content={content}
-            onChange={setContent}
-            placeholder="Write your notes here..."
-          />
-        </div>
-
-        <div className="modal-footer">
-          <div className="footer-info">
-            <span className="node-id">ID: {node.id}</span>
-            <span className="last-updated">
-              Updated: {new Date(node.updatedAt).toLocaleString()}
-            </span>
-          </div>
-          <button className="save-close-button" onClick={handleClose}>
-            Save & Close
-          </button>
-        </div>
       </div>
-    </div>
+
+      <ImageLightbox
+        media={nodeMedia}
+        initialIndex={lightboxIndex}
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+      />
+    </>
   );
 
   return ReactDOM.createPortal(modalContent, document.body);

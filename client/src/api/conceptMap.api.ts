@@ -1,23 +1,23 @@
 import { apiClient } from './client';
-import { Mindmap, CreateMindmapInput } from '../types';
+import { ConceptMap, CreateConceptMapInput } from '../types';
 
-export const mindmapApi = {
-  getAll: async (): Promise<Mindmap[]> => {
+export const conceptMapApi = {
+  getAll: async (): Promise<ConceptMap[]> => {
     const response = await apiClient.get('/mindmaps');
     return response.data.mindmaps;
   },
 
-  getById: async (id: string): Promise<Mindmap> => {
+  getById: async (id: string): Promise<ConceptMap> => {
     const response = await apiClient.get(`/mindmaps/${id}`);
     return response.data;
   },
 
-  create: async (data: CreateMindmapInput): Promise<Mindmap> => {
+  create: async (data: CreateConceptMapInput): Promise<ConceptMap> => {
     const response = await apiClient.post('/mindmaps', data);
     return response.data;
   },
 
-  update: async (id: string, data: Partial<Mindmap>): Promise<Mindmap> => {
+  update: async (id: string, data: Partial<ConceptMap>): Promise<ConceptMap> => {
     const response = await apiClient.patch(`/mindmaps/${id}`, data);
     return response.data;
   },

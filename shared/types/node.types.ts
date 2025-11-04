@@ -21,7 +21,7 @@ export interface RichTextContent {
 
 export interface Node {
   id: string;
-  mindmapId: string;
+  conceptMapId: string;
   title: string;
   content: RichTextContent;
   position: Position;
@@ -35,7 +35,7 @@ export interface Node {
 }
 
 export interface NodeCreateInput {
-  mindmapId: string;
+  conceptMapId: string;
   title: string;
   content?: RichTextContent;
   position: Position;

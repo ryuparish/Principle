@@ -22,7 +22,17 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3]
-        }
+        },
+        bulletList: {
+          HTMLAttributes: {
+            class: 'bullet-list',
+          },
+        },
+        orderedList: {
+          HTMLAttributes: {
+            class: 'ordered-list',
+          },
+        },
       }),
       Underline,
       Link.configure({
@@ -36,6 +46,8 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     onUpdate: ({ editor }) => {
       onChange(editor.getJSON());
     },
+    // Disable all input rules globally to prevent "* " and "1. " from being consumed
+    enableInputRules: false,
   });
 
   if (!editor) {
@@ -135,14 +147,6 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             type="button"
           >
             1. List
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            className={editor.isActive('blockquote') ? 'is-active' : ''}
-            title="Blockquote"
-            type="button"
-          >
-            " Quote
           </button>
         </div>
 

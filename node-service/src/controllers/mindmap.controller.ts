@@ -1,30 +1,30 @@
 import { Request, Response } from 'express';
-import { mindmapService } from '../services/mindmap.service';
+import { conceptMapService } from '../services/mindmap.service';
 
-export class MindmapController {
+export class ConceptMapController {
   async getAll(req: Request, res: Response) {
     try {
-      const mindmaps = await mindmapService.getAllMindmaps();
-      res.json({ mindmaps });
+      const conceptMaps = await conceptMapService.getAllConceptMaps();
+      res.json({ mindmaps: conceptMaps });
     } catch (error) {
-      console.error('Error fetching mindmaps:', error);
-      res.status(500).json({ error: 'Failed to fetch mindmaps' });
+      console.error('Error fetching concept maps:', error);
+      res.status(500).json({ error: 'Failed to fetch concept maps' });
     }
   }
 
   async getById(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const mindmap = await mindmapService.getMindmapById(id);
+      const conceptMap = await conceptMapService.getConceptMapById(id);
 
-      if (!mindmap) {
-        return res.status(404).json({ error: 'Mindmap not found' });
+      if (!conceptMap) {
+        return res.status(404).json({ error: 'Concept map not found' });
       }
 
-      res.json(mindmap);
+      res.json(conceptMap);
     } catch (error) {
-      console.error('Error fetching mindmap:', error);
-      res.status(500).json({ error: 'Failed to fetch mindmap' });
+      console.error('Error fetching concept map:', error);
+      res.status(500).json({ error: 'Failed to fetch concept map' });
     }
   }
 
@@ -36,11 +36,11 @@ export class MindmapController {
         return res.status(400).json({ error: 'Name is required' });
       }
 
-      const mindmap = await mindmapService.createMindmap({ name, description });
-      res.status(201).json(mindmap);
+      const conceptMap = await conceptMapService.createConceptMap({ name, description });
+      res.status(201).json(conceptMap);
     } catch (error) {
-      console.error('Error creating mindmap:', error);
-      res.status(500).json({ error: 'Failed to create mindmap' });
+      console.error('Error creating concept map:', error);
+      res.status(500).json({ error: 'Failed to create concept map' });
     }
   }
 
@@ -49,35 +49,35 @@ export class MindmapController {
       const { id } = req.params;
       const { name, description, viewport } = req.body;
 
-      const mindmap = await mindmapService.updateMindmap(id, {
+      const conceptMap = await conceptMapService.updateConceptMap(id, {
         name,
         description,
         viewport
       });
 
-      res.json(mindmap);
+      res.json(conceptMap);
     } catch (error: any) {
       if (error.code === 'P2025') {
-        return res.status(404).json({ error: 'Mindmap not found' });
+        return res.status(404).json({ error: 'Concept map not found' });
       }
-      console.error('Error updating mindmap:', error);
-      res.status(500).json({ error: 'Failed to update mindmap' });
+      console.error('Error updating concept map:', error);
+      res.status(500).json({ error: 'Failed to update concept map' });
     }
   }
 
   async delete(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      await mindmapService.deleteMindmap(id);
-      res.json({ success: true, message: 'Mindmap deleted' });
+      await conceptMapService.deleteConceptMap(id);
+      res.json({ success: true, message: 'Concept map deleted' });
     } catch (error: any) {
       if (error.code === 'P2025') {
-        return res.status(404).json({ error: 'Mindmap not found' });
+        return res.status(404).json({ error: 'Concept map not found' });
       }
-      console.error('Error deleting mindmap:', error);
-      res.status(500).json({ error: 'Failed to delete mindmap' });
+      console.error('Error deleting concept map:', error);
+      res.status(500).json({ error: 'Failed to delete concept map' });
     }
   }
 }
 
-export const mindmapController = new MindmapController();
+export const conceptMapController = new ConceptMapController();

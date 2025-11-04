@@ -1,12 +1,12 @@
-import { Mindmap } from '@prisma/client';
+import { ConceptMap } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 
-export interface CreateMindmapInput {
+export interface CreateConceptMapInput {
   name: string;
   description?: string;
 }
 
-export interface UpdateMindmapInput {
+export interface UpdateConceptMapInput {
   name?: string;
   description?: string;
   viewport?: {
@@ -16,9 +16,9 @@ export interface UpdateMindmapInput {
   };
 }
 
-export class MindmapService {
-  async getAllMindmaps(): Promise<Mindmap[]> {
-    return prisma.mindmap.findMany({
+export class ConceptMapService {
+  async getAllConceptMaps(): Promise<ConceptMap[]> {
+    return prisma.conceptMap.findMany({
       orderBy: { updatedAt: 'desc' },
       include: {
         _count: {
@@ -28,8 +28,8 @@ export class MindmapService {
     });
   }
 
-  async getMindmapById(id: string): Promise<Mindmap | null> {
-    return prisma.mindmap.findUnique({
+  async getConceptMapById(id: string): Promise<ConceptMap | null> {
+    return prisma.conceptMap.findUnique({
       where: { id },
       include: {
         nodes: {
@@ -40,8 +40,8 @@ export class MindmapService {
     });
   }
 
-  async createMindmap(data: CreateMindmapInput): Promise<Mindmap> {
-    return prisma.mindmap.create({
+  async createConceptMap(data: CreateConceptMapInput): Promise<ConceptMap> {
+    return prisma.conceptMap.create({
       data: {
         name: data.name,
         description: data.description,
@@ -50,8 +50,8 @@ export class MindmapService {
     });
   }
 
-  async updateMindmap(id: string, data: UpdateMindmapInput): Promise<Mindmap> {
-    return prisma.mindmap.update({
+  async updateConceptMap(id: string, data: UpdateConceptMapInput): Promise<ConceptMap> {
+    return prisma.conceptMap.update({
       where: { id },
       data: {
         ...(data.name && { name: data.name }),
@@ -61,12 +61,12 @@ export class MindmapService {
     });
   }
 
-  async deleteMindmap(id: string): Promise<void> {
+  async deleteConceptMap(id: string): Promise<void> {
     // This will cascade delete all nodes due to Prisma schema
-    await prisma.mindmap.delete({
+    await prisma.conceptMap.delete({
       where: { id }
     });
   }
 }
 
-export const mindmapService = new MindmapService();
+export const conceptMapService = new ConceptMapService();

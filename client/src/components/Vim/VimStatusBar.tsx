@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMindmapStore } from '../../store/mindmapStore';
+import { useConceptMapStore } from "../../store/conceptMapStore";
 import { VimState } from '../../types/vim.types';
 import './VimStatusBar.css';
 
@@ -8,7 +8,7 @@ interface VimStatusBarProps {
 }
 
 const VimStatusBar: React.FC<VimStatusBarProps> = ({ vimState }) => {
-  const { edges } = useMindmapStore();
+  const { edges } = useConceptMapStore();
 
   if (!vimState.enabled) {
     return null;

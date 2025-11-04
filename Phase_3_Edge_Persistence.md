@@ -1272,3 +1272,4 @@ To begin Phase 4, ensure Phase 3 success criteria are met, then refer to `Phase_
 ---
 
 **Phase 3 Complete!** You now have a fully connected mindmap with persistent edges. Users can visually map relationships and create meaningful knowledge graphs.
+Are you sure you want to delete this image?

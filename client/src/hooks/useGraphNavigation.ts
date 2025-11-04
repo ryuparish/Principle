@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useReactFlow } from 'reactflow';
-import { useMindmapStore } from '../store/mindmapStore';
+import { useConceptMapStore } from "../store/conceptMapStore";
 import {
   findNodeInDirection,
   findNextConnectedNode,
@@ -18,7 +18,7 @@ import { useVimMode } from './useVimMode';
  */
 export const useGraphNavigation = () => {
   const { getNodes, setCenter } = useReactFlow();
-  const { edges } = useMindmapStore();
+  const { edges } = useConceptMapStore();
   const vim = useVimMode();
 
   // Navigate in spatial direction (h/j/k/l)

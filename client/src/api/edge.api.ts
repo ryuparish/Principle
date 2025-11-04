@@ -1,20 +1,20 @@
 import { apiClient } from './client';
-import { MindmapEdge, CreateEdgeInput, UpdateEdgeInput } from '../types';
+import { ConceptMapEdge, CreateEdgeInput, UpdateEdgeInput } from '../types';
 
 export const edgeApi = {
-  getByMindmap: async (mindmapId: string): Promise<MindmapEdge[]> => {
+  getByConceptMap: async (conceptMapId: string): Promise<ConceptMapEdge[]> => {
     const response = await apiClient.get('/edges', {
-      params: { mindmapId }
+      params: { conceptMapId }
     });
     return response.data.edges || response.data;
   },
 
-  create: async (data: CreateEdgeInput): Promise<MindmapEdge> => {
+  create: async (data: CreateEdgeInput): Promise<ConceptMapEdge> => {
     const response = await apiClient.post('/edges', data);
     return response.data;
   },
 
-  update: async (id: string, data: UpdateEdgeInput): Promise<MindmapEdge> => {
+  update: async (id: string, data: UpdateEdgeInput): Promise<ConceptMapEdge> => {
     const response = await apiClient.patch(`/edges/${id}`, data);
     return response.data;
   },

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useReactFlow } from 'reactflow';
-import { useMindmapStore } from '../store/mindmapStore';
+import { useConceptMapStore } from "../store/conceptMapStore";
 import { useVimMode } from './useVimMode';
 import { GraphObject } from '../types/vim.types';
 import { queueApi } from '../api/queue.api';
@@ -26,7 +26,7 @@ export const useVimOperations = () => {
     createNode,
     createEdge,
     updateNodeLocal
-  } = useMindmapStore();
+  } = useConceptMapStore();
 
   // Delete operation
   const deleteOperation = useCallback(async (object: GraphObject) => {
@@ -179,6 +179,48 @@ export const useVimOperations = () => {
     }
   }, [vim.state.focusedNodeId, setNodes, updateNodeLocal]);
 
+  // Move selected nodes (for move mode with visual selection)
+  const moveSelectedNodes = useCallback((dx: number, dy: number) => {
+    if (vim.state.selectedNodeIds.size === 0) return;
+
+    const selectedIds = Array.from(vim.state.selectedNodeIds);
+    console.log('[MOVE] Moving selected nodes:', selectedIds, 'by', dx, dy);
+
+    // Track new positions for persistence
+    const newPositions = new Map<string, { x: number; y: number }>();
+
+    // Update ReactFlow nodes directly for immediate visual feedback
+    setNodes((nodes) => {
+      return nodes.map((node) => {
+        if (selectedIds.includes(node.id)) {
+          const newPosition = {
+            x: node.position.x + dx,
+            y: node.position.y + dy
+          };
+          newPositions.set(node.id, newPosition);
+
+          return {
+            ...node,
+            position: newPosition
+          };
+        }
+        return node;
+      });
+    });
+
+    // Persist all moved nodes to store and database
+    newPositions.forEach((position, nodeId) => {
+      // Update in-memory store immediately
+      updateNodeLocal(nodeId, { position });
+
+      // Publish to queue for database persistence (fire-and-forget)
+      queueApi.publish({
+        nodeId,
+        position
+      });
+    });
+  }, [vim.state.selectedNodeIds, setNodes, updateNodeLocal]);
+
   // Get connected edge IDs for a node (for edge edit mode)
   const getConnectedEdgeIds = useCallback((nodeId: string): string[] => {
     return storeEdges
@@ -247,6 +289,7 @@ export const useVimOperations = () => {
     changeOperation,
     createEdgeOperation,
     moveFocusedNode,
+    moveSelectedNodes,
     getConnectedEdgeIds,
     deleteSelectedEdge,
     getSelectedEdgeSourceId,

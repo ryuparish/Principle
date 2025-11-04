@@ -1,4 +1,4 @@
-import { MindmapNode, MindmapEdge } from './index';
+import { ConceptMapNode, ConceptMapEdge } from './index';
 
 // Vim modes
 export type VimMode = 'normal' | 'insert' | 'visual' | 'edge' | 'edgeEdit' | 'command' | 'move';
@@ -19,8 +19,8 @@ export interface VimCommand {
 
 // Yank register for copy/paste
 export interface YankRegister {
-  nodes: MindmapNode[];
-  edges: MindmapEdge[];
+  nodes: ConceptMapNode[];
+  edges: ConceptMapEdge[];
   timestamp: number;
 }
 
@@ -97,6 +97,9 @@ export interface VimState {
   // Editor modal state
   editorNodeId: string | null; // Node ID whose editor should be open
 
+  // Edge label editor state
+  edgeLabelEditorId: string | null; // Edge ID whose label is being edited
+
   // Settings
   enabled: boolean; // Toggle vim mode on/off
 }
@@ -140,6 +143,7 @@ export const createInitialVimState = (): VimState => ({
   visualModeAnchor: null,
   lastOperation: null,
   editorNodeId: null,
+  edgeLabelEditorId: null,
   enabled: true
 });
 
@@ -163,7 +167,7 @@ export type VimAction =
   | { type: 'APPEND_COMMAND_BUFFER'; char: string }
   | { type: 'CLEAR_COMMAND_BUFFER' }
   | { type: 'SET_OPERATOR_PENDING'; operator: Operator | null }
-  | { type: 'SET_YANK_REGISTER'; nodes: MindmapNode[]; edges: MindmapEdge[] }
+  | { type: 'SET_YANK_REGISTER'; nodes: ConceptMapNode[]; edges: ConceptMapEdge[] }
   | { type: 'SET_MARK'; mark: string; nodeId: string }
   | { type: 'ADD_TO_HISTORY'; nodeId: string }
   | { type: 'HISTORY_BACK' }
@@ -185,5 +189,7 @@ export type VimAction =
   | { type: 'SET_LAST_OPERATION'; operation: VimCommand }
   | { type: 'OPEN_EDITOR'; nodeId: string }
   | { type: 'CLOSE_EDITOR' }
+  | { type: 'OPEN_EDGE_LABEL_EDITOR'; edgeId: string }
+  | { type: 'CLOSE_EDGE_LABEL_EDITOR' }
   | { type: 'TOGGLE_ENABLED' }
   | { type: 'RESET' };

@@ -1,43 +1,43 @@
 import React, { useState } from 'react';
-import MindmapSelector from './components/Mindmap/MindmapSelector';
-import MindMapCanvas from './components/Canvas/MindMapCanvas';
+import ConceptMapSelector from './components/ConceptMap/ConceptMapSelector';
+import ConceptMapCanvas from './components/Canvas/ConceptMapCanvas';
 import { queueApi } from './api/queue.api';
 
 function App() {
-  const [selectedMindmapId, setSelectedMindmapId] = useState<string | null>(null);
+  const [selectedConceptMapId, setSelectedConceptMapId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleBackToMindmaps = async () => {
+  const handleBackToConceptMaps = async () => {
     setIsSaving(true);
 
     try {
       // Wait for queue to be empty before navigating
       await queueApi.waitEmpty();
-      setSelectedMindmapId(null);
+      setSelectedConceptMapId(null);
     } catch (error) {
       console.error('Error waiting for queue:', error);
-      setSelectedMindmapId(null);
+      setSelectedConceptMapId(null);
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (!selectedMindmapId) {
-    return <MindmapSelector onSelect={setSelectedMindmapId} />;
+  if (!selectedConceptMapId) {
+    return <ConceptMapSelector onSelect={setSelectedConceptMapId} />;
   }
 
   return (
     <div className="w-full h-screen relative">
       <div className="absolute top-4 left-4 z-10">
         <button
-          onClick={handleBackToMindmaps}
+          onClick={handleBackToConceptMaps}
           disabled={isSaving}
           className="px-4 py-2 bg-white border border-gray-300 rounded shadow hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSaving ? '💾 Saving...' : '← Back to Mindmaps'}
+          {isSaving ? '💾 Saving...' : '← Back to Concept Maps'}
         </button>
       </div>
-      <MindMapCanvas mindmapId={selectedMindmapId} />
+      <ConceptMapCanvas conceptMapId={selectedConceptMapId} />
     </div>
   );
 }

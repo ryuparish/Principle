@@ -6,6 +6,7 @@ import mindmapRoutes from './routes/mindmap.routes';
 import nodeRoutes from './routes/node.routes';
 import edgeRoutes from './routes/edge.routes';
 import queueRoutes from './routes/queue.routes';
+import mediaRoutes from './routes/media.routes';
 
 dotenv.config();
 
@@ -36,7 +37,8 @@ app.get('/', (req: Request, res: Response) => {
       mindmaps: '/api/mindmaps',
       nodes: '/api/nodes',
       edges: '/api/edges',
-      queue: '/api/queue'
+      queue: '/api/queue',
+      media: '/api/media'
     }
   });
 });
@@ -46,6 +48,7 @@ app.use('/api/mindmaps', mindmapRoutes);
 app.use('/api/nodes', nodeRoutes);
 app.use('/api/edges', edgeRoutes);
 app.use('/api/queue', queueRoutes);
+app.use('/api/media', mediaRoutes);
 
 // Start server
 app.listen(PORT, () => {

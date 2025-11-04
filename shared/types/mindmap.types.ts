@@ -4,7 +4,7 @@ export interface Viewport {
   zoom: number;
 }
 
-export interface Mindmap {
+export interface ConceptMap {
   id: string;
   name: string;
   description?: string;
@@ -13,12 +13,12 @@ export interface Mindmap {
   updatedAt: Date;
 }
 
-export interface MindmapCreateInput {
+export interface ConceptMapCreateInput {
   name: string;
   description?: string;
 }
 
-export interface MindmapUpdateInput {
+export interface ConceptMapUpdateInput {
   name?: string;
   description?: string;
   viewport?: Viewport;

@@ -1,25 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { useMindmapStore } from '../../store/mindmapStore';
+import { useConceptMapStore } from "../../store/conceptMapStore";
 
-interface MindmapSelectorProps {
-  onSelect: (mindmapId: string) => void;
+interface ConceptMapSelectorProps {
+  onSelect: (conceptMapId: string) => void;
 }
 
-const MindmapSelector: React.FC<MindmapSelectorProps> = ({ onSelect }) => {
-  const { mindmaps, loadMindmaps, createMindmap } = useMindmapStore();
+const ConceptMapSelector: React.FC<ConceptMapSelectorProps> = ({ onSelect }) => {
+  const { conceptMaps, loadConceptMaps, createConceptMap } = useConceptMapStore();
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
 
   useEffect(() => {
-    loadMindmaps();
+    loadConceptMaps();
   }, []);
 
   const handleCreate = async () => {
     if (newName.trim()) {
-      const mindmap = await createMindmap(newName.trim());
+      const conceptMap = await createConceptMap(newName.trim());
       setNewName('');
       setShowCreate(false);
-      onSelect(mindmap.id);
+      onSelect(conceptMap.id);
     }
   };
 
@@ -27,12 +27,12 @@ const MindmapSelector: React.FC<MindmapSelectorProps> = ({ onSelect }) => {
     <div className="p-4 bg-gray-100 min-h-screen">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">My Mindmaps</h1>
+          <h1 className="text-3xl font-bold text-gray-800">My Concept Maps</h1>
           <button
             onClick={() => setShowCreate(true)}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
-            + New Mindmap
+            + New Concept Map
           </button>
         </div>
 
@@ -42,7 +42,7 @@ const MindmapSelector: React.FC<MindmapSelectorProps> = ({ onSelect }) => {
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder="Mindmap name..."
+              placeholder="Concept map name..."
               className="w-full px-3 py-2 border rounded mb-2"
               onKeyPress={(e) => e.key === 'Enter' && handleCreate()}
             />
@@ -64,26 +64,26 @@ const MindmapSelector: React.FC<MindmapSelectorProps> = ({ onSelect }) => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mindmaps.map((mindmap) => (
+          {conceptMaps.map((conceptMap) => (
             <div
-              key={mindmap.id}
-              onClick={() => onSelect(mindmap.id)}
+              key={conceptMap.id}
+              onClick={() => onSelect(conceptMap.id)}
               className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition"
             >
-              <h3 className="text-xl font-semibold mb-2">{mindmap.name}</h3>
-              {mindmap.description && (
-                <p className="text-gray-600 text-sm mb-2">{mindmap.description}</p>
+              <h3 className="text-xl font-semibold mb-2">{conceptMap.name}</h3>
+              {conceptMap.description && (
+                <p className="text-gray-600 text-sm mb-2">{conceptMap.description}</p>
               )}
               <p className="text-gray-400 text-xs">
-                Updated: {new Date(mindmap.updatedAt).toLocaleDateString()}
+                Updated: {new Date(conceptMap.updatedAt).toLocaleDateString()}
               </p>
             </div>
           ))}
         </div>
 
-        {mindmaps.length === 0 && !showCreate && (
+        {conceptMaps.length === 0 && !showCreate && (
           <div className="text-center text-gray-500 mt-12">
-            <p className="text-lg">No mindmaps yet. Create one to get started!</p>
+            <p className="text-lg">No concept maps yet. Create one to get started!</p>
           </div>
         )}
       </div>
@@ -91,4 +91,4 @@ const MindmapSelector: React.FC<MindmapSelectorProps> = ({ onSelect }) => {
   );
 };
 
-export default MindmapSelector;
+export default ConceptMapSelector;

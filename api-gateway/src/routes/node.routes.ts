@@ -4,12 +4,12 @@ import { services } from '../config/services.config';
 
 const router = Router();
 
-// Get nodes by mindmap
+// Get nodes by concept map
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { mindmapId } = req.query;
+    const { conceptMapId } = req.query;
     const response = await axios.get(`${services.nodeService}/nodes`, {
-      params: { mindmapId }
+      params: { conceptMapId }
     });
     res.json(response.data);
   } catch (error: any) {
@@ -23,9 +23,9 @@ router.get('/', async (req: Request, res: Response) => {
 // Search nodes
 router.get('/search', async (req: Request, res: Response) => {
   try {
-    const { mindmapId, q } = req.query;
+    const { conceptMapId, q } = req.query;
     const response = await axios.get(`${services.nodeService}/nodes/search`, {
-      params: { mindmapId, q }
+      params: { conceptMapId, q }
     });
     res.json(response.data);
   } catch (error: any) {

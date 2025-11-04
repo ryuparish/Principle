@@ -7,7 +7,7 @@ export interface EdgeStyle {
 
 export interface Edge {
   id: string;
-  mindmapId: string;
+  conceptMapId: string;
   sourceNodeId: string;
   targetNodeId: string;
   label?: string;
@@ -16,7 +16,7 @@ export interface Edge {
 }
 
 export interface EdgeCreateInput {
-  mindmapId: string;
+  conceptMapId: string;
   sourceNodeId: string;
   targetNodeId: string;
   label?: string;

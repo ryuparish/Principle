@@ -1,4 +1,4 @@
-import { MindmapNode, MindmapEdge } from '../types';
+import { ConceptMapNode, ConceptMapEdge } from '../types';
 import {
   findConnectedNodes,
   findSubtreeNodes
@@ -14,11 +14,11 @@ export const resolveGraphObject = (
   object: string,
   focusedNodeId: string | null,
   selectedNodeIds: Set<string>,
-  allNodes: MindmapNode[],
-  allEdges: MindmapEdge[]
-): { nodes: MindmapNode[]; edges: MindmapEdge[] } => {
-  const nodes: MindmapNode[] = [];
-  const edges: MindmapEdge[] = [];
+  allNodes: ConceptMapNode[],
+  allEdges: ConceptMapEdge[]
+): { nodes: ConceptMapNode[]; edges: ConceptMapEdge[] } => {
+  const nodes: ConceptMapNode[] = [];
+  const edges: ConceptMapEdge[] = [];
 
   switch (object) {
     case 'n': // Current node
@@ -91,8 +91,8 @@ export const resolveGraphObject = (
 
 // Execute delete operation
 export const executeDelete = async (
-  nodes: MindmapNode[],
-  edges: MindmapEdge[],
+  nodes: ConceptMapNode[],
+  edges: ConceptMapEdge[],
   deleteNodesFn: (ids: string[]) => Promise<void>,
   deleteEdgeFn: (id: string) => Promise<void>
 ): Promise<void> => {
@@ -118,9 +118,9 @@ export const executeDelete = async (
 
 // Execute yank operation (copy to register)
 export const executeYank = (
-  nodes: MindmapNode[],
-  edges: MindmapEdge[]
-): { nodes: MindmapNode[]; edges: MindmapEdge[] } => {
+  nodes: ConceptMapNode[],
+  edges: ConceptMapEdge[]
+): { nodes: ConceptMapNode[]; edges: ConceptMapEdge[] } => {
   // Deep copy nodes and edges for yank register
   return {
     nodes: nodes.map(n => ({ ...n })),
@@ -130,11 +130,11 @@ export const executeYank = (
 
 // Execute paste operation
 export const executePaste = async (
-  yankRegister: { nodes: MindmapNode[]; edges: MindmapEdge[] },
+  yankRegister: { nodes: ConceptMapNode[]; edges: ConceptMapEdge[] },
   focusedNodeId: string | null,
   pasteAsConnected: boolean,
-  createNodeFn: (title: string, position: { x: number; y: number }) => Promise<MindmapNode>,
-  createEdgeFn: (sourceNodeId: string, targetNodeId: string, label?: string) => Promise<MindmapEdge>
+  createNodeFn: (title: string, position: { x: number; y: number }) => Promise<ConceptMapNode>,
+  createEdgeFn: (sourceNodeId: string, targetNodeId: string, label?: string) => Promise<ConceptMapEdge>
 ): Promise<string[]> => {
   const createdNodeIds: string[] = [];
   const oldToNewIdMap = new Map<string, string>();

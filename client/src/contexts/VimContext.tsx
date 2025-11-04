@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useCallback, useMemo } from 'react';
 import { VimState, VimMode, Operator, VimCommand, createInitialVimState, VimAction } from '../types/vim.types';
 import { vimStateReducer } from '../services/vimState';
-import { MindmapNode, MindmapEdge } from '../types';
+import { ConceptMapNode, ConceptMapEdge } from '../types';
 
 interface VimContextValue {
   state: VimState;
@@ -30,8 +30,8 @@ interface VimContextValue {
   setOperatorPending: (operator: Operator | null) => void;
 
   // Yank register
-  setYankRegister: (nodes: MindmapNode[], edges: MindmapEdge[]) => void;
-  yankNodes: (nodes: MindmapNode[], edges?: MindmapEdge[]) => void;
+  setYankRegister: (nodes: ConceptMapNode[], edges: ConceptMapEdge[]) => void;
+  yankNodes: (nodes: ConceptMapNode[], edges?: ConceptMapEdge[]) => void;
 
   // Marks
   setMark: (mark: string, nodeId: string) => void;
@@ -72,6 +72,10 @@ interface VimContextValue {
   // Editor modal
   openEditor: (nodeId: string) => void;
   closeEditor: () => void;
+
+  // Edge label editor
+  openEdgeLabelEditor: (edgeId: string) => void;
+  closeEdgeLabelEditor: () => void;
 
   // Settings
   toggleEnabled: () => void;
@@ -116,8 +120,8 @@ export const VimProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const setOperatorPending = useCallback((operator: Operator | null) => dispatch({ type: 'SET_OPERATOR_PENDING', operator }), []);
 
   // Yank register
-  const setYankRegister = useCallback((nodes: MindmapNode[], edges: MindmapEdge[]) => dispatch({ type: 'SET_YANK_REGISTER', nodes, edges }), []);
-  const yankNodes = useCallback((nodes: MindmapNode[], edges: MindmapEdge[] = []) => dispatch({ type: 'SET_YANK_REGISTER', nodes, edges }), []);
+  const setYankRegister = useCallback((nodes: ConceptMapNode[], edges: ConceptMapEdge[]) => dispatch({ type: 'SET_YANK_REGISTER', nodes, edges }), []);
+  const yankNodes = useCallback((nodes: ConceptMapNode[], edges: ConceptMapEdge[] = []) => dispatch({ type: 'SET_YANK_REGISTER', nodes, edges }), []);
 
   // Marks
   const setMark = useCallback((mark: string, nodeId: string) => dispatch({ type: 'SET_MARK', mark, nodeId }), []);
@@ -163,6 +167,10 @@ export const VimProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Editor modal
   const openEditor = useCallback((nodeId: string) => dispatch({ type: 'OPEN_EDITOR', nodeId }), []);
   const closeEditor = useCallback(() => dispatch({ type: 'CLOSE_EDITOR' }), []);
+
+  // Edge label editor
+  const openEdgeLabelEditor = useCallback((edgeId: string) => dispatch({ type: 'OPEN_EDGE_LABEL_EDITOR', edgeId }), []);
+  const closeEdgeLabelEditor = useCallback(() => dispatch({ type: 'CLOSE_EDGE_LABEL_EDITOR' }), []);
 
   // Settings
   const toggleEnabled = useCallback(() => dispatch({ type: 'TOGGLE_ENABLED' }), []);
@@ -211,6 +219,8 @@ export const VimProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setLastOperation,
     openEditor,
     closeEditor,
+    openEdgeLabelEditor,
+    closeEdgeLabelEditor,
     toggleEnabled,
     reset
   }), [
@@ -254,6 +264,8 @@ export const VimProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setLastOperation,
     openEditor,
     closeEditor,
+    openEdgeLabelEditor,
+    closeEdgeLabelEditor,
     toggleEnabled,
     reset
   ]);

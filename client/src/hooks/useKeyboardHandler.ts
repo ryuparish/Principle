@@ -46,6 +46,11 @@ export const useKeyboardHandler = () => {
       return;
     }
 
+    // Don't process if edge label editor is open (except for Escape)
+    if (vim.state.edgeLabelEditorId && e.key !== 'Escape') {
+      return;
+    }
+
     const vimKey = createVimKeyEvent(e);
     const isEditable = isEditableElement(e.target);
 
@@ -208,6 +213,15 @@ export const useKeyboardHandler = () => {
         return;
       }
 
+      // m - enter move mode to move selected nodes
+      if (vimKey.key === 'm' && !vimKey.ctrl && !vimKey.meta) {
+        if (vim.state.selectedNodeIds.size > 0) {
+          vim.enterMoveMode();
+          // Keep selection to move all selected nodes
+        }
+        return;
+      }
+
       // Escape - exit visual mode
       if (vimKey.key === 'Escape' || (vimKey.ctrl && vimKey.key === '[')) {
         vim.enterNormalMode();
@@ -259,8 +273,11 @@ export const useKeyboardHandler = () => {
 
     // MOVE MODE
     if (vim.state.mode === 'move') {
+      // Check if we're moving multiple nodes (from visual mode) or single node
+      const hasSelection = vim.state.selectedNodeIds.size > 0;
       const focusedNodeId = vim.state.focusedNodeId;
-      if (!focusedNodeId) {
+
+      if (!hasSelection && !focusedNodeId) {
         vim.enterNormalMode();
         return;
       }
@@ -271,27 +288,43 @@ export const useKeyboardHandler = () => {
         return;
       }
 
-      // hjkl - move the focused node
+      // hjkl - move the node(s)
       const MOVE_DISTANCE = 50; // pixels to move per keypress
 
       if (vimKey.key === 'h') {
         // Move left
-        operations.moveFocusedNode(-MOVE_DISTANCE, 0);
+        if (hasSelection) {
+          operations.moveSelectedNodes(-MOVE_DISTANCE, 0);
+        } else {
+          operations.moveFocusedNode(-MOVE_DISTANCE, 0);
+        }
         return;
       }
       if (vimKey.key === 'j') {
         // Move down
-        operations.moveFocusedNode(0, MOVE_DISTANCE);
+        if (hasSelection) {
+          operations.moveSelectedNodes(0, MOVE_DISTANCE);
+        } else {
+          operations.moveFocusedNode(0, MOVE_DISTANCE);
+        }
         return;
       }
       if (vimKey.key === 'k') {
         // Move up
-        operations.moveFocusedNode(0, -MOVE_DISTANCE);
+        if (hasSelection) {
+          operations.moveSelectedNodes(0, -MOVE_DISTANCE);
+        } else {
+          operations.moveFocusedNode(0, -MOVE_DISTANCE);
+        }
         return;
       }
       if (vimKey.key === 'l') {
         // Move right
-        operations.moveFocusedNode(MOVE_DISTANCE, 0);
+        if (hasSelection) {
+          operations.moveSelectedNodes(MOVE_DISTANCE, 0);
+        } else {
+          operations.moveFocusedNode(MOVE_DISTANCE, 0);
+        }
         return;
       }
     }
@@ -356,6 +389,16 @@ export const useKeyboardHandler = () => {
         if (targetNodeId) {
           vim.setFocus(targetNodeId);
           vim.exitEdgeEditMode();
+        }
+        return;
+      }
+
+      // i - edit label of selected edge
+      if (vimKey.key === 'i' && !vimKey.ctrl && !vimKey.meta) {
+        const { edgeIds, selectedIndex } = vim.state.edgeEditMode;
+        if (selectedIndex >= 0 && selectedIndex < edgeIds.length) {
+          const edgeId = edgeIds[selectedIndex];
+          vim.openEdgeLabelEditor(edgeId);
         }
         return;
       }

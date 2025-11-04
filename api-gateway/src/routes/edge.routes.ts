@@ -4,12 +4,12 @@ import { services } from '../config/services.config';
 
 const router = Router();
 
-// Get edges by mindmap
+// Get edges by concept map
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { mindmapId } = req.query;
+    const { conceptMapId } = req.query;
     const response = await axios.get(`${services.edgeService}/edges`, {
-      params: { mindmapId }
+      params: { conceptMapId }
     });
     res.json(response.data);
   } catch (error: any) {

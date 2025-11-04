@@ -2,15 +2,15 @@ import { Request, Response } from 'express';
 import { nodeService } from '../services/node.service';
 
 export class NodeController {
-  async getByMindmap(req: Request, res: Response) {
+  async getByConceptMap(req: Request, res: Response) {
     try {
-      const { mindmapId } = req.query;
+      const { conceptMapId } = req.query;
 
-      if (!mindmapId || typeof mindmapId !== 'string') {
-        return res.status(400).json({ error: 'mindmapId query parameter is required' });
+      if (!conceptMapId || typeof conceptMapId !== 'string') {
+        return res.status(400).json({ error: 'conceptMapId query parameter is required' });
       }
 
-      const nodes = await nodeService.getNodesByMindmap(mindmapId);
+      const nodes = await nodeService.getNodesByConceptMap(conceptMapId);
       res.json({ nodes });
     } catch (error) {
       console.error('Error fetching nodes:', error);
@@ -36,11 +36,11 @@ export class NodeController {
 
   async create(req: Request, res: Response) {
     try {
-      const { mindmapId, title, content, position, style } = req.body;
+      const { conceptMapId, title, content, position, style } = req.body;
 
       // Validation
-      if (!mindmapId) {
-        return res.status(400).json({ error: 'mindmapId is required' });
+      if (!conceptMapId) {
+        return res.status(400).json({ error: 'conceptMapId is required' });
       }
       if (!title || title.trim().length === 0) {
         return res.status(400).json({ error: 'title is required' });
@@ -50,7 +50,7 @@ export class NodeController {
       }
 
       const node = await nodeService.createNode({
-        mindmapId,
+        conceptMapId,
         title,
         content,
         position,
@@ -104,16 +104,16 @@ export class NodeController {
 
   async search(req: Request, res: Response) {
     try {
-      const { mindmapId, q } = req.query;
+      const { conceptMapId, q } = req.query;
 
-      if (!mindmapId || typeof mindmapId !== 'string') {
-        return res.status(400).json({ error: 'mindmapId query parameter is required' });
+      if (!conceptMapId || typeof conceptMapId !== 'string') {
+        return res.status(400).json({ error: 'conceptMapId query parameter is required' });
       }
       if (!q || typeof q !== 'string') {
         return res.status(400).json({ error: 'q (query) parameter is required' });
       }
 
-      const nodes = await nodeService.searchNodes(mindmapId, q);
+      const nodes = await nodeService.searchNodes(conceptMapId, q);
       res.json({ results: nodes });
     } catch (error) {
       console.error('Error searching nodes:', error);
