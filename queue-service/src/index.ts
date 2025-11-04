@@ -19,9 +19,7 @@ app.get('/health', (req: Request, res: Response) => {
     status: 'healthy',
     service: 'queue-service',
     timestamp: new Date().toISOString(),
-    redis: {
-      connected: positionQueue.client.status === 'ready'
-    }
+    queue: 'in-memory'
   });
 });
 
@@ -46,18 +44,20 @@ app.use('/queue', queueRoutes);
 // Start server
 app.listen(PORT, () => {
   console.log(`✅ Queue Service running on http://localhost:${PORT}`);
-  console.log(`📊 Redis connection: ${positionQueue.client.status}`);
+  console.log(`📊 Queue: in-memory (no Redis needed)`);
 });
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\n🛑 Shutting down Queue Service...');
-  await positionQueue.close();
+  const { queueService } = await import('./services/queue.service');
+  await queueService.close();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   console.log('\n🛑 Shutting down Queue Service...');
-  await positionQueue.close();
+  const { queueService } = await import('./services/queue.service');
+  await queueService.close();
   process.exit(0);
 });

@@ -1,175 +1,383 @@
-# Principle - Interactive World Mindmap Application
+# Principle - Interactive World Concept Map Application
 
-A local-first, microservices-based mindmap application for organizing knowledge and taking notes in an interactive mindmap format.
+A local-first, microservices-based concept map application for organizing knowledge and taking notes in an interactive mindmap format.
 
-## Installation on Mac
+> **🚀 Docker-Free Version**: This branch runs entirely with SQLite and in-memory queuing. No Docker, PostgreSQL, or Redis required!
 
-### Prerequisites
+## Prerequisites
 
-Before installing Principle, ensure you have the following installed on your Mac:
+**Required:**
+- **Node.js** (v18 or higher) and **npm** (v9 or higher)
+  ```bash
+  # Check if installed
+  node --version
+  npm --version
 
-1. **Node.js** (v18 or higher) and **npm** (v9 or higher)
-   ```bash
-   # Check if installed
-   node --version
-   npm --version
+  # If not installed, download from: https://nodejs.org/
+  # Or install via Homebrew:
+  brew install node
+  ```
 
-   # If not installed, download from:
-   # https://nodejs.org/en/download/
-   # Or install via Homebrew:
-   brew install node
-   ```
+**Optional:**
+- **Git** (for cloning the repository)
+  ```bash
+  # Check if installed
+  git --version
 
-2. **Docker Desktop for Mac**
-   ```bash
-   # Check if installed
-   docker --version
-   docker-compose --version
+  # If not installed:
+  brew install git
+  ```
 
-   # If not installed, download from:
-   # https://www.docker.com/products/docker-desktop
-   # Or install via Homebrew:
-   brew install --cask docker
+---
 
-   # After installation, start Docker Desktop from Applications
-   ```
+## Quick Start
 
-3. **Git** (usually pre-installed on Mac)
-   ```bash
-   # Check if installed
-   git --version
+> 📚 **New to Principle?** Check out [GETTING_STARTED.md](./GETTING_STARTED.md) for a complete walkthrough including how to use Vim mode and all features!
 
-   # If not installed:
-   brew install git
-   ```
+### 1. Clone or Copy the Repository
 
-### Installation Steps
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd Principle
-   ```
-
-   If you're copying from an existing installation, you can skip this step and just navigate to the Principle directory.
-
-2. **Install all dependencies**
-   ```bash
-   npm run install:all
-   ```
-
-   This will install dependencies for all services (API Gateway, Node Service, Edge Service, Media Service, AI Service, Queue Service) and the client application.
-
-3. **Start Docker containers**
-
-   Make sure Docker Desktop is running, then start the PostgreSQL databases and Redis:
-   ```bash
-   docker-compose up -d
-   ```
-
-   This will start:
-   - 3 PostgreSQL databases (for nodes, edges, and media)
-   - Redis (for queue management)
-
-4. **Run database migrations**
-   ```bash
-   npm run prisma:migrate
-   ```
-
-   This sets up the database schema for all services.
-
-5. **Start the application**
-   ```bash
-   npm run dev:all
-   ```
-
-   This will start all services and the client application.
-
-6. **Open the application**
-
-   Once all services are running, open your browser and navigate to:
-   ```
-   http://localhost:5173
-   ```
-
-### Stopping the Application
-
-To stop all services:
 ```bash
-# Press Ctrl+C in the terminal where dev:all is running
-# Then kill any remaining processes:
-npm run kill
+# Option A: Clone from Git
+git clone <repository-url>
+cd Principle
+
+# Option B: If copying from existing installation
+cd Principle
 ```
 
-To stop Docker containers:
+### 2. Checkout Docker-Free Branch
+
 ```bash
-npm run docker:down
+git checkout docker-free
 ```
 
-### Restarting the Application
+### 3. Install Dependencies
 
-To restart everything after stopping:
 ```bash
-# Start Docker (if not already running)
-npm run docker:up
-
-# Start all services
-npm run dev:all
-```
-
-## Services & Ports
-
-Once running, the following services will be available:
-
-- **Client (Web App):** http://localhost:5173
-- **API Gateway:** http://localhost:3000
-- **Node Service:** http://localhost:3001
-- **Edge Service:** http://localhost:3002
-- **Media Service:** http://localhost:3003
-- **AI Service:** http://localhost:3004
-- **Queue Service:** http://localhost:3005
-
-## Troubleshooting
-
-**Problem: "Port already in use" errors**
-```bash
-# Kill existing processes on those ports
-npm run kill
-```
-
-**Problem: Docker containers won't start**
-```bash
-# Make sure Docker Desktop is running
-# Then restart containers
-npm run docker:down
-npm run docker:up
-```
-
-**Problem: Database connection errors**
-```bash
-# Reset databases (WARNING: This will delete all data)
-npm run docker:reset
-npm run prisma:migrate
-```
-
-**Problem: Module not found errors**
-```bash
-# Reinstall dependencies
 npm run install:all
 ```
 
-## Documentation
+This installs dependencies for all services (API Gateway, Node Service, Edge Service, Media Service, AI Service, Queue Service) and the client application.
 
-- [PRD.md](./PRD.md) - Full product requirements
-- [Phase_0_Project_Setup.md](./Phase_0_Project_Setup.md) - Detailed setup instructions
+**Installation takes:** ~2-3 minutes
+
+### 4. Run Database Migrations
+
+```bash
+npm run prisma:migrate
+```
+
+This creates the SQLite databases and sets up the schema for all services. You'll see:
+- `node-service/dev.db` - Stores concept map nodes
+- `edge-service/dev.db` - Stores connections between nodes
+- `media-service/dev.db` - Stores media metadata
+
+**Migration takes:** ~10 seconds
+
+### 5. Start the Application
+
+```bash
+npm run dev:all
+```
+
+This starts all 7 services concurrently. Wait until you see:
+```
+✅ API Gateway running on http://localhost:3000
+✅ Node Service running on http://localhost:3001
+ Edge Service running on http://localhost:3002
+ Media Service running on http://localhost:3003
+ AI Service running on http://localhost:3004
+✅ Queue Service running on http://localhost:3005
+📊 Queue: in-memory (no Redis needed)
+VITE ready in XXXms
+➜ Local: http://localhost:5173/
+```
+
+**Startup takes:** ~5-10 seconds
+
+### 6. Open the Application
+
+Navigate to: **http://localhost:5173**
+
+---
+
+## Stopping the Application
+
+### Quick Stop
+
+Press `Ctrl+C` in the terminal where `dev:all` is running.
+
+### Force Kill (if needed)
+
+If services don't stop cleanly:
+
+```bash
+npm run kill
+```
+
+This kills all processes on ports 3000-3005 and 5173.
+
+---
+
+## Restarting the Application
+
+```bash
+npm run restart
+```
+
+This is equivalent to:
+```bash
+npm run kill && npm run dev:all
+```
+
+---
+
+## Services & Ports
+
+Once running, these services are available:
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| **Client (Web App)** | http://localhost:5173 | React UI with Vim mode |
+| **API Gateway** | http://localhost:3000 | Routes requests to microservices |
+| **Node Service** | http://localhost:3001 | Manages concept map nodes |
+| **Edge Service** | http://localhost:3002 | Manages connections between nodes |
+| **Media Service** | http://localhost:3003 | Handles image uploads |
+| **AI Service** | http://localhost:3004 | Placeholder for AI features |
+| **Queue Service** | http://localhost:3005 | Handles position update queue |
+
+---
+
+## Database Files
+
+All data is stored in SQLite files (human-readable with SQLite tools):
+
+```
+node-service/dev.db        # Concept maps and nodes
+edge-service/dev.db        # Edges/connections
+media-service/dev.db       # Media metadata
+```
+
+**Backup:** Just copy these 3 `.db` files
+
+**Reset:** Delete these files and run `npm run prisma:migrate` again
+
+---
+
+## Project Structure
+
+```
+Principle/
+├── api-gateway/          # Request router
+├── node-service/         # Node CRUD + SQLite DB
+├── edge-service/         # Edge CRUD + SQLite DB
+├── media-service/        # Media handling + SQLite DB
+├── ai-service/           # AI features (placeholder)
+├── queue-service/        # Position update queue (in-memory)
+├── client/               # React frontend with Vim mode
+├── shared/               # Shared types (future)
+├── package.json          # Root scripts
+└── README.md            # This file
+```
+
+---
+
+## Troubleshooting
+
+### Problem: "Port already in use" errors
+
+**Solution:**
+```bash
+npm run kill
+```
+
+This kills all processes on Principle's ports.
+
+---
+
+### Problem: "Module not found" errors
+
+**Solution:**
+```bash
+npm run install:all
+```
+
+Reinstalls all dependencies across services.
+
+---
+
+### Problem: Database errors or corrupted data
+
+**Solution (WARNING: Deletes all data):**
+```bash
+# Delete databases
+rm node-service/dev.db edge-service/dev.db media-service/dev.db
+
+# Recreate
+npm run prisma:migrate
+```
+
+---
+
+### Problem: Services won't start
+
+**Check:**
+1. Node.js version: `node --version` (should be v18+)
+2. Port conflicts: `npm run kill`
+3. Dependencies: `npm run install:all`
+4. Logs: Look for errors in the terminal output
+
+---
+
+### Problem: Queue not processing updates
+
+**Restart queue service:**
+```bash
+# Kill all services
+npm run kill
+
+# Restart
+npm run dev:all
+```
+
+The queue is in-memory, so it clears on restart (this is intentional for development).
+
+---
+
+## Development Commands
+
+```bash
+# Install all dependencies
+npm run install:all
+
+# Start all services
+npm run dev:all
+
+# Stop all services
+npm run kill
+
+# Restart all services
+npm run restart
+
+# Generate Prisma clients
+npm run prisma:generate
+
+# Run database migrations
+npm run prisma:migrate
+```
+
+---
+
+## Individual Service Commands
+
+Start services individually for debugging:
+
+```bash
+# API Gateway
+cd api-gateway && PORT=3000 npm run dev
+
+# Node Service
+cd node-service && PORT=3001 npm run dev
+
+# Edge Service
+cd edge-service && PORT=3002 npm run dev
+
+# Media Service
+cd media-service && PORT=3003 npm run dev
+
+# AI Service
+cd ai-service && PORT=3004 npm run dev
+
+# Queue Service
+cd queue-service && PORT=3005 npm run dev
+
+# Client
+cd client && npm run dev
+```
+
+---
+
+## Features
+
+### ✅ Vim Mode
+- Full Vim-style keyboard navigation
+- Modes: Normal, Insert, Visual, Edge, Edge Edit, Move, Command
+- Press `Ctrl+;` to toggle Vim mode
+
+### ✅ Concept Mapping
+- Create nodes with rich text content (TipTap editor)
+- Create edges/connections between nodes
+- Drag nodes to position them
+- Move mode (`m`) for keyboard-based positioning
+
+### ✅ Edge Management
+- Edge mode (`e`) to create connections
+- Edge Edit mode (`Shift+E`) to view/delete/navigate edges
+- Navigate along edges with `h` (source) and `l` (target)
+
+### ✅ Offline-First
+- All data stored locally in SQLite
+- No external API calls
+- Works without internet
+
+---
 
 ## Architecture
 
-Principle uses a microservices architecture with:
-- 6 backend services (API Gateway, Node, Edge, Media, AI, Queue)
-- 1 React frontend client
-- 3 PostgreSQL databases (one per core service)
-- Redis for queue management
-- Local file storage for images
+**Stack:**
+- **Frontend:** React 18 + ReactFlow + TipTap + Vite
+- **Backend:** 6 Node.js/Express microservices
+- **Database:** 3 SQLite databases (file-based)
+- **Queue:** better-queue (in-memory with retry logic)
+- **State Management:** Zustand
+- **Type Safety:** TypeScript everywhere
 
-All data stays on your machine for privacy and offline capability.
+**Data Flow:**
+1. Client → API Gateway → Microservice → SQLite
+2. Position updates → Queue Service → Node Service (batched writes)
+3. All services run as child processes (no Docker needed)
+
+**Why Microservices?**
+- Easy to understand (each service has one job)
+- Can scale individual services later
+- Good separation of concerns
+- Mimics real-world architectures
+
+---
+
+## Documentation
+
+**Getting Started:**
+- [GETTING_STARTED.md](./GETTING_STARTED.md) - **Complete beginner's guide** with Vim mode tutorial
+
+**Technical Documentation:**
+- [PRD.md](./PRD.md) - Full product requirements
+- [Phase_0_Project_Setup.md](./Phase_0_Project_Setup.md) - Initial setup details
+- [Phase_1_Core_Mindmap_Nodes.md](./Phase_1_Core_Mindmap_Nodes.md) - Node implementation
+- [Phase_2_Node_Content_Editor.md](./Phase_2_Node_Content_Editor.md) - TipTap integration
+- [Phase_3_Edge_Persistence.md](./Phase_3_Edge_Persistence.md) - Edge implementation
+
+---
+
+## Privacy & Security
+
+✅ **100% Local** - All data stays on your machine
+✅ **No External APIs** - No analytics, tracking, or telemetry
+✅ **No Docker Required** - Pure Node.js, runs anywhere
+✅ **Work-Safe** - Perfect for restricted environments
+
+---
+
+## License
+
+[Add your license here]
+
+---
+
+## Contributing
+
+[Add contribution guidelines here]
+
+---
+
+**Built with ❤️ for knowledge organization**

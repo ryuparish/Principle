@@ -3,16 +3,15 @@ generator client {
 }
 
 datasource db {
-  provider          = "postgresql"
-  url               = env("DATABASE_URL")
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model ConceptMap {
   id          String   @id @default(uuid())
   name        String
   description String?
-  viewport    Json     @default("{\"x\": 0, \"y\": 0, \"zoom\": 1}")
+  viewport    String   @default("{\"x\": 0, \"y\": 0, \"zoom\": 1}")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   nodes       Node[]
@@ -24,11 +23,11 @@ model Node {
   id            String     @id @default(uuid())
   conceptMapId  String     @map("mindmapId")
   title         String
-  content       Json       @default("{}")
-  position      Json
-  style         Json       @default("{}")
-  imageIds      String[]   @default([])
-  tags          String[]   @default([])
+  content       String     @default("{}")
+  position      String
+  style         String     @default("{}")
+  imageIds      String     @default("[]")
+  tags          String     @default("[]")
   isDeleted     Boolean    @default(false)
   deletedAt     DateTime?
   createdAt     DateTime   @default(now())
@@ -48,7 +47,7 @@ model Edge {
   sourceNodeId  String
   targetNodeId  String
   label         String?
-  style         Json     @default("{}")
+  style         String   @default("{}")
   createdAt     DateTime @default(now())
 
   @@unique([sourceNodeId, targetNodeId])
