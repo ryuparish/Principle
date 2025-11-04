@@ -57,9 +57,11 @@ git checkout docker-free
 npm run install:all
 ```
 
-This installs dependencies for all services (API Gateway, Node Service, Edge Service, Media Service, AI Service, Queue Service) and the client application.
+This installs dependencies for all services (API Gateway, Node Service, Edge Service, Media Service, AI Service, Queue Service) and the client application, then automatically creates `.env` files from the `.env.example` templates.
 
 **Installation takes:** ~2-3 minutes
+
+**Note:** If you need to recreate `.env` files later, run: `npm run setup`
 
 ### 4. Run Database Migrations
 

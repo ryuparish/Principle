@@ -14,7 +14,8 @@
     "shared"
   ],
   "scripts": {
-    "install:all": "npm install && npm run install:services && npm run install:client",
+    "setup": "./setup-env.sh",
+    "install:all": "npm install && npm run install:services && npm run install:client && npm run setup",
     "install:services": "cd api-gateway && npm install && cd ../node-service && npm install && cd ../edge-service && npm install && cd ../media-service && npm install && cd ../ai-service && npm install && cd ../queue-service && npm install",
     "install:client": "cd client && npm install",
     "kill": "./kill-services.sh",

@@ -46,10 +46,11 @@ This will:
 - Install root dependencies
 - Install all 6 backend service dependencies
 - Install client (React) dependencies
+- **Create `.env` files** from `.env.example` templates
 
 **Takes:** ~2-3 minutes
 
-**You'll see:** A lot of npm install output. Wait for all services to complete.
+**You'll see:** A lot of npm install output, followed by "✅ Created [service]/.env" messages.
 
 ### Step 4: Set Up Databases
 
