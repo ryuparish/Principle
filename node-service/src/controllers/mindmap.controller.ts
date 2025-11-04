@@ -5,7 +5,14 @@ export class ConceptMapController {
   async getAll(req: Request, res: Response) {
     try {
       const conceptMaps = await conceptMapService.getAllConceptMaps();
-      res.json({ mindmaps: conceptMaps });
+
+      // Parse JSON strings back to objects for client
+      const parsedConceptMaps = conceptMaps.map(cm => ({
+        ...cm,
+        viewport: JSON.parse(cm.viewport as any)
+      }));
+
+      res.json({ mindmaps: parsedConceptMaps });
     } catch (error) {
       console.error('Error fetching concept maps:', error);
       res.status(500).json({ error: 'Failed to fetch concept maps' });
@@ -21,7 +28,21 @@ export class ConceptMapController {
         return res.status(404).json({ error: 'Concept map not found' });
       }
 
-      res.json(conceptMap);
+      // Parse JSON strings back to objects for client
+      const parsedConceptMap = {
+        ...conceptMap,
+        viewport: JSON.parse(conceptMap.viewport as any),
+        nodes: conceptMap.nodes?.map(node => ({
+          ...node,
+          position: JSON.parse(node.position as any),
+          content: JSON.parse(node.content as any),
+          style: JSON.parse(node.style as any),
+          imageIds: JSON.parse(node.imageIds as any),
+          tags: JSON.parse(node.tags as any)
+        }))
+      };
+
+      res.json(parsedConceptMap);
     } catch (error) {
       console.error('Error fetching concept map:', error);
       res.status(500).json({ error: 'Failed to fetch concept map' });
@@ -37,7 +58,14 @@ export class ConceptMapController {
       }
 
       const conceptMap = await conceptMapService.createConceptMap({ name, description });
-      res.status(201).json(conceptMap);
+
+      // Parse JSON strings back to objects for client
+      const parsedConceptMap = {
+        ...conceptMap,
+        viewport: JSON.parse(conceptMap.viewport as any)
+      };
+
+      res.status(201).json(parsedConceptMap);
     } catch (error) {
       console.error('Error creating concept map:', error);
       res.status(500).json({ error: 'Failed to create concept map' });
@@ -55,7 +83,13 @@ export class ConceptMapController {
         viewport
       });
 
-      res.json(conceptMap);
+      // Parse JSON strings back to objects for client
+      const parsedConceptMap = {
+        ...conceptMap,
+        viewport: JSON.parse(conceptMap.viewport as any)
+      };
+
+      res.json(parsedConceptMap);
     } catch (error: any) {
       if (error.code === 'P2025') {
         return res.status(404).json({ error: 'Concept map not found' });

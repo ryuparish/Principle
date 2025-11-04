@@ -11,7 +11,14 @@ export class EdgeController {
       }
 
       const edges = await edgeService.getEdgesByConceptMap(conceptMapId);
-      res.json({ edges });
+
+      // Parse JSON strings back to objects for client
+      const parsedEdges = edges.map(edge => ({
+        ...edge,
+        style: JSON.parse(edge.style as any)
+      }));
+
+      res.json({ edges: parsedEdges });
     } catch (error) {
       console.error('Error fetching edges:', error);
       res.status(500).json({ error: 'Failed to fetch edges' });
@@ -27,7 +34,13 @@ export class EdgeController {
         return res.status(404).json({ error: 'Edge not found' });
       }
 
-      res.json(edge);
+      // Parse JSON strings back to objects for client
+      const parsedEdge = {
+        ...edge,
+        style: JSON.parse(edge.style as any)
+      };
+
+      res.json(parsedEdge);
     } catch (error) {
       console.error('Error fetching edge:', error);
       res.status(500).json({ error: 'Failed to fetch edge' });
@@ -57,7 +70,13 @@ export class EdgeController {
         style
       });
 
-      res.status(201).json(edge);
+      // Parse JSON strings back to objects for client
+      const parsedEdge = {
+        ...edge,
+        style: JSON.parse(edge.style as any)
+      };
+
+      res.status(201).json(parsedEdge);
     } catch (error) {
       console.error('Error creating edge:', error);
       res.status(500).json({ error: 'Failed to create edge' });
@@ -74,7 +93,13 @@ export class EdgeController {
         style
       });
 
-      res.json(edge);
+      // Parse JSON strings back to objects for client
+      const parsedEdge = {
+        ...edge,
+        style: JSON.parse(edge.style as any)
+      };
+
+      res.json(parsedEdge);
     } catch (error: any) {
       if (error.code === 'P2025') {
         return res.status(404).json({ error: 'Edge not found' });

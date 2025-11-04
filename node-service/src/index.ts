@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../node_modules/.prisma/client-node';
 import mindmapRoutes from './routes/mindmap.routes';
 import nodeRoutes from './routes/node.routes';
 

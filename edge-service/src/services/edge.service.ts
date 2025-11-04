@@ -1,4 +1,4 @@
-import { Edge } from '@prisma/client';
+import { Edge } from '../../node_modules/.prisma/client-edge';
 import { prisma } from '../lib/prisma';
 
 export interface CreateEdgeInput {
@@ -35,7 +35,7 @@ export class EdgeService {
         sourceNodeId: data.sourceNodeId,
         targetNodeId: data.targetNodeId,
         label: data.label,
-        style: data.style || {}
+        style: JSON.stringify(data.style || {})
       }
     });
   }
@@ -45,7 +45,7 @@ export class EdgeService {
       where: { id },
       data: {
         ...(data.label !== undefined && { label: data.label }),
-        ...(data.style !== undefined && { style: data.style })
+        ...(data.style !== undefined && { style: JSON.stringify(data.style) })
       }
     });
   }

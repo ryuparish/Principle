@@ -11,7 +11,18 @@ export class NodeController {
       }
 
       const nodes = await nodeService.getNodesByConceptMap(conceptMapId);
-      res.json({ nodes });
+
+      // Parse JSON strings back to objects for client
+      const parsedNodes = nodes.map(node => ({
+        ...node,
+        position: JSON.parse(node.position as any),
+        content: JSON.parse(node.content as any),
+        style: JSON.parse(node.style as any),
+        imageIds: JSON.parse(node.imageIds as any),
+        tags: JSON.parse(node.tags as any)
+      }));
+
+      res.json({ nodes: parsedNodes });
     } catch (error) {
       console.error('Error fetching nodes:', error);
       res.status(500).json({ error: 'Failed to fetch nodes' });
@@ -27,7 +38,17 @@ export class NodeController {
         return res.status(404).json({ error: 'Node not found' });
       }
 
-      res.json(node);
+      // Parse JSON strings back to objects for client
+      const parsedNode = {
+        ...node,
+        position: JSON.parse(node.position as any),
+        content: JSON.parse(node.content as any),
+        style: JSON.parse(node.style as any),
+        imageIds: JSON.parse(node.imageIds as any),
+        tags: JSON.parse(node.tags as any)
+      };
+
+      res.json(parsedNode);
     } catch (error) {
       console.error('Error fetching node:', error);
       res.status(500).json({ error: 'Failed to fetch node' });
@@ -57,7 +78,17 @@ export class NodeController {
         style
       });
 
-      res.status(201).json(node);
+      // Parse JSON strings back to objects for client
+      const parsedNode = {
+        ...node,
+        position: JSON.parse(node.position as any),
+        content: JSON.parse(node.content as any),
+        style: JSON.parse(node.style as any),
+        imageIds: JSON.parse(node.imageIds as any),
+        tags: JSON.parse(node.tags as any)
+      };
+
+      res.status(201).json(parsedNode);
     } catch (error) {
       console.error('Error creating node:', error);
       res.status(500).json({ error: 'Failed to create node' });
@@ -78,7 +109,17 @@ export class NodeController {
         tags
       });
 
-      res.json(node);
+      // Parse JSON strings back to objects for client
+      const parsedNode = {
+        ...node,
+        position: JSON.parse(node.position as any),
+        content: JSON.parse(node.content as any),
+        style: JSON.parse(node.style as any),
+        imageIds: JSON.parse(node.imageIds as any),
+        tags: JSON.parse(node.tags as any)
+      };
+
+      res.json(parsedNode);
     } catch (error: any) {
       if (error.code === 'P2025') {
         return res.status(404).json({ error: 'Node not found' });
@@ -114,7 +155,18 @@ export class NodeController {
       }
 
       const nodes = await nodeService.searchNodes(conceptMapId, q);
-      res.json({ results: nodes });
+
+      // Parse JSON strings back to objects for client
+      const parsedNodes = nodes.map(node => ({
+        ...node,
+        position: JSON.parse(node.position as any),
+        content: JSON.parse(node.content as any),
+        style: JSON.parse(node.style as any),
+        imageIds: JSON.parse(node.imageIds as any),
+        tags: JSON.parse(node.tags as any)
+      }));
+
+      res.json({ results: parsedNodes });
     } catch (error) {
       console.error('Error searching nodes:', error);
       res.status(500).json({ error: 'Failed to search nodes' });

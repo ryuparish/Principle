@@ -1,4 +1,4 @@
-import { Media } from '@prisma/client';
+import { Media } from '../../node_modules/.prisma/client-media';
 import { prisma } from '../lib/prisma';
 import { storageService } from './storage.service';
 

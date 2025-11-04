@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../node_modules/.prisma/client-node';
 
 // Singleton pattern for Prisma Client
 // Prevents multiple instances in development with hot reload

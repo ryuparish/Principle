@@ -45,7 +45,7 @@ export class ConceptMapService {
       data: {
         name: data.name,
         description: data.description,
-        viewport: { x: 0, y: 0, zoom: 1 }
+        viewport: JSON.stringify({ x: 0, y: 0, zoom: 1 })
       }
     });
   }
@@ -56,7 +56,7 @@ export class ConceptMapService {
       data: {
         ...(data.name && { name: data.name }),
         ...(data.description !== undefined && { description: data.description }),
-        ...(data.viewport && { viewport: data.viewport })
+        ...(data.viewport && { viewport: JSON.stringify(data.viewport) })
       }
     });
   }

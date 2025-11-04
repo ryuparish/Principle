@@ -46,9 +46,9 @@ export class NodeService {
       data: {
         conceptMapId: data.conceptMapId,
         title: data.title,
-        content: data.content || {},
-        position: data.position,
-        style: data.style || {}
+        content: JSON.stringify(data.content || {}),
+        position: JSON.stringify(data.position),
+        style: JSON.stringify(data.style || {})
       }
     });
   }
@@ -58,11 +58,11 @@ export class NodeService {
       where: { id },
       data: {
         ...(data.title !== undefined && { title: data.title }),
-        ...(data.content !== undefined && { content: data.content }),
-        ...(data.position !== undefined && { position: data.position }),
-        ...(data.style !== undefined && { style: data.style }),
-        ...(data.imageIds !== undefined && { imageIds: data.imageIds }),
-        ...(data.tags !== undefined && { tags: data.tags })
+        ...(data.content !== undefined && { content: JSON.stringify(data.content) }),
+        ...(data.position !== undefined && { position: JSON.stringify(data.position) }),
+        ...(data.style !== undefined && { style: JSON.stringify(data.style) }),
+        ...(data.imageIds !== undefined && { imageIds: JSON.stringify(data.imageIds) }),
+        ...(data.tags !== undefined && { tags: JSON.stringify(data.tags) })
       }
     });
   }
