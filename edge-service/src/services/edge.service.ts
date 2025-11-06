@@ -1,5 +1,5 @@
-import { Edge } from '../../node_modules/.prisma/client-edge';
-import { prisma } from '../lib/prisma';
+import { Edge } from '../entities/Edge';
+import { AppDataSource } from '../data-source';
 
 export interface CreateEdgeInput {
   conceptMapId: string;
@@ -15,45 +15,49 @@ export interface UpdateEdgeInput {
 }
 
 export class EdgeService {
+  private edgeRepository = AppDataSource.getRepository(Edge);
+
   async getEdgesByConceptMap(conceptMapId: string): Promise<Edge[]> {
-    return prisma.edge.findMany({
+    return await this.edgeRepository.find({
       where: { conceptMapId },
-      orderBy: { createdAt: 'asc' }
+      order: { createdAt: 'ASC' }
     });
   }
 
   async getEdgeById(id: string): Promise<Edge | null> {
-    return prisma.edge.findUnique({
+    return await this.edgeRepository.findOne({
       where: { id }
     });
   }
 
   async createEdge(data: CreateEdgeInput): Promise<Edge> {
-    return prisma.edge.create({
-      data: {
-        conceptMapId: data.conceptMapId,
-        sourceNodeId: data.sourceNodeId,
-        targetNodeId: data.targetNodeId,
-        label: data.label,
-        style: JSON.stringify(data.style || {})
-      }
+    const edge = this.edgeRepository.create({
+      conceptMapId: data.conceptMapId,
+      sourceNodeId: data.sourceNodeId,
+      targetNodeId: data.targetNodeId,
+      label: data.label,
+      style: data.style || {}
     });
+
+    return await this.edgeRepository.save(edge);
   }
 
   async updateEdge(id: string, data: UpdateEdgeInput): Promise<Edge> {
-    return prisma.edge.update({
-      where: { id },
-      data: {
-        ...(data.label !== undefined && { label: data.label }),
-        ...(data.style !== undefined && { style: JSON.stringify(data.style) })
-      }
-    });
+    const updateData: any = {};
+    if (data.label !== undefined) updateData.label = data.label;
+    if (data.style !== undefined) updateData.style = data.style;
+
+    await this.edgeRepository.update({ id }, updateData);
+
+    const updated = await this.edgeRepository.findOne({ where: { id } });
+    if (!updated) {
+      throw new Error('Edge not found after update');
+    }
+    return updated;
   }
 
   async deleteEdge(id: string): Promise<void> {
-    await prisma.edge.delete({
-      where: { id }
-    });
+    await this.edgeRepository.delete({ id });
   }
 }
 

@@ -27,9 +27,7 @@
     "dev:ai": "cd ai-service && PORT=3004 npm run dev",
     "dev:queue": "cd queue-service && PORT=3005 npm run dev",
     "dev:client": "cd client && npm run dev",
-    "restart": "npm run kill && npm run dev:all",
-    "prisma:generate": "(cd node-service && npx prisma generate) && (cd edge-service && npx prisma generate) && (cd media-service && npx prisma generate)",
-    "prisma:migrate": "(cd node-service && npx prisma migrate dev) && (cd edge-service && npx prisma migrate dev) && (cd media-service && npx prisma migrate dev)"
+    "restart": "npm run kill && npm run dev:all"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

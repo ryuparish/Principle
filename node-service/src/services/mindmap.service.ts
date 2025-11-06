@@ -1,5 +1,5 @@
-import { ConceptMap } from '@prisma/client';
-import { prisma } from '../lib/prisma';
+import { ConceptMap } from '../entities/ConceptMap';
+import { AppDataSource } from '../data-source';
 
 export interface CreateConceptMapInput {
   name: string;
@@ -17,55 +17,50 @@ export interface UpdateConceptMapInput {
 }
 
 export class ConceptMapService {
+  private conceptMapRepository = AppDataSource.getRepository(ConceptMap);
+
   async getAllConceptMaps(): Promise<ConceptMap[]> {
-    return prisma.conceptMap.findMany({
-      orderBy: { updatedAt: 'desc' },
-      include: {
-        _count: {
-          select: { nodes: true }
-        }
-      }
+    return await this.conceptMapRepository.find({
+      relations: ['nodes'],
+      order: { updatedAt: 'DESC' }
     });
   }
 
   async getConceptMapById(id: string): Promise<ConceptMap | null> {
-    return prisma.conceptMap.findUnique({
+    return await this.conceptMapRepository.findOne({
       where: { id },
-      include: {
-        nodes: {
-          where: { isDeleted: false },
-          orderBy: { createdAt: 'asc' }
-        }
-      }
+      relations: ['nodes']
     });
   }
 
   async createConceptMap(data: CreateConceptMapInput): Promise<ConceptMap> {
-    return prisma.conceptMap.create({
-      data: {
-        name: data.name,
-        description: data.description,
-        viewport: JSON.stringify({ x: 0, y: 0, zoom: 1 })
-      }
+    const conceptMap = this.conceptMapRepository.create({
+      name: data.name,
+      description: data.description,
+      viewport: { x: 0, y: 0, zoom: 1 }
     });
+
+    return await this.conceptMapRepository.save(conceptMap);
   }
 
   async updateConceptMap(id: string, data: UpdateConceptMapInput): Promise<ConceptMap> {
-    return prisma.conceptMap.update({
-      where: { id },
-      data: {
-        ...(data.name && { name: data.name }),
-        ...(data.description !== undefined && { description: data.description }),
-        ...(data.viewport && { viewport: JSON.stringify(data.viewport) })
-      }
-    });
+    const updateData: any = {};
+    if (data.name) updateData.name = data.name;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.viewport) updateData.viewport = data.viewport;
+
+    await this.conceptMapRepository.update({ id }, updateData);
+
+    const updated = await this.conceptMapRepository.findOne({ where: { id } });
+    if (!updated) {
+      throw new Error('ConceptMap not found after update');
+    }
+    return updated;
   }
 
   async deleteConceptMap(id: string): Promise<void> {
-    // This will cascade delete all nodes due to Prisma schema
-    await prisma.conceptMap.delete({
-      where: { id }
-    });
+    // This will cascade delete all nodes due to entity relationship
+    await this.conceptMapRepository.delete({ id });
   }
 }
 

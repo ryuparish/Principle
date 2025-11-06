@@ -1,5 +1,6 @@
-import { Node } from '@prisma/client';
-import { prisma } from '../lib/prisma';
+import { Node } from '../entities/Node';
+import { AppDataSource } from '../data-source';
+import { Like } from 'typeorm';
 
 export interface CreateNodeInput {
   conceptMapId: string;
@@ -25,71 +26,73 @@ export interface UpdateNodeInput {
 }
 
 export class NodeService {
+  private nodeRepository = AppDataSource.getRepository(Node);
+
   async getNodesByConceptMap(conceptMapId: string): Promise<Node[]> {
-    return prisma.node.findMany({
+    return await this.nodeRepository.find({
       where: {
         conceptMapId,
         isDeleted: false
       },
-      orderBy: { createdAt: 'asc' }
+      order: { createdAt: 'ASC' }
     });
   }
 
   async getNodeById(id: string): Promise<Node | null> {
-    return prisma.node.findUnique({
+    return await this.nodeRepository.findOne({
       where: { id }
     });
   }
 
   async createNode(data: CreateNodeInput): Promise<Node> {
-    return prisma.node.create({
-      data: {
-        conceptMapId: data.conceptMapId,
-        title: data.title,
-        content: JSON.stringify(data.content || {}),
-        position: JSON.stringify(data.position),
-        style: JSON.stringify(data.style || {})
-      }
+    const node = this.nodeRepository.create({
+      conceptMapId: data.conceptMapId,
+      title: data.title,
+      content: data.content || {},
+      position: data.position,
+      style: data.style || {}
     });
+
+    return await this.nodeRepository.save(node);
   }
 
   async updateNode(id: string, data: UpdateNodeInput): Promise<Node> {
-    return prisma.node.update({
-      where: { id },
-      data: {
-        ...(data.title !== undefined && { title: data.title }),
-        ...(data.content !== undefined && { content: JSON.stringify(data.content) }),
-        ...(data.position !== undefined && { position: JSON.stringify(data.position) }),
-        ...(data.style !== undefined && { style: JSON.stringify(data.style) }),
-        ...(data.imageIds !== undefined && { imageIds: JSON.stringify(data.imageIds) }),
-        ...(data.tags !== undefined && { tags: JSON.stringify(data.tags) })
-      }
-    });
+    const updateData: any = {};
+    if (data.title !== undefined) updateData.title = data.title;
+    if (data.content !== undefined) updateData.content = data.content;
+    if (data.position !== undefined) updateData.position = data.position;
+    if (data.style !== undefined) updateData.style = data.style;
+    if (data.imageIds !== undefined) updateData.imageIds = data.imageIds;
+    if (data.tags !== undefined) updateData.tags = data.tags;
+
+    await this.nodeRepository.update({ id }, updateData);
+
+    const updated = await this.nodeRepository.findOne({ where: { id } });
+    if (!updated) {
+      throw new Error('Node not found after update');
+    }
+    return updated;
   }
 
   async deleteNode(id: string): Promise<void> {
     // Soft delete
-    await prisma.node.update({
-      where: { id },
-      data: {
+    await this.nodeRepository.update(
+      { id },
+      {
         isDeleted: true,
         deletedAt: new Date()
       }
-    });
+    );
   }
 
   async searchNodes(conceptMapId: string, query: string): Promise<Node[]> {
-    return prisma.node.findMany({
+    return await this.nodeRepository.find({
       where: {
         conceptMapId,
         isDeleted: false,
-        OR: [
-          { title: { contains: query, mode: 'insensitive' } },
-          // Note: Searching in JSONB requires raw SQL for complex queries
-          // For MVP, we'll just search titles
-        ]
+        title: Like(`%${query}%`)
       },
-      orderBy: { updatedAt: 'desc' },
+      order: { updatedAt: 'DESC' },
       take: 20
     });
   }

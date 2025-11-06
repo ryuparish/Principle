@@ -1,6 +1,7 @@
-import { Media } from '../../node_modules/.prisma/client-media';
-import { prisma } from '../lib/prisma';
+import { Media } from '../entities/Media';
+import { AppDataSource } from '../data-source';
 import { storageService } from './storage.service';
+import { LessThan } from 'typeorm';
 
 export interface CreateMediaInput {
   nodeId?: string;
@@ -11,6 +12,8 @@ export interface CreateMediaInput {
 }
 
 export class MediaService {
+  private mediaRepository = AppDataSource.getRepository(Media);
+
   async createMedia(data: CreateMediaInput): Promise<Media> {
     // Get image dimensions
     const dimensions = await storageService.getImageDimensions(data.filename);
@@ -18,55 +21,56 @@ export class MediaService {
     // Generate thumbnail
     const thumbnailFilename = await storageService.generateThumbnail(data.filename);
 
-    // Create database record
-    const media = await prisma.media.create({
-      data: {
-        nodeId: data.nodeId,
-        filename: data.filename,
-        originalName: data.originalName,
-        mimeType: data.mimeType,
-        sizeBytes: data.sizeBytes,
-        width: dimensions.width,
-        height: dimensions.height,
-        url: `/media/${data.filename}`,
-        thumbnailUrl: `/media/${thumbnailFilename}`
-      }
+    // Create entity instance
+    const media = this.mediaRepository.create({
+      nodeId: data.nodeId,
+      filename: data.filename,
+      originalName: data.originalName,
+      mimeType: data.mimeType,
+      sizeBytes: data.sizeBytes,
+      width: dimensions.width,
+      height: dimensions.height,
+      url: `/media/${data.filename}`,
+      thumbnailUrl: `/media/${thumbnailFilename}`
     });
 
-    return media;
+    // Save to database
+    return await this.mediaRepository.save(media);
   }
 
   async getMediaById(id: string): Promise<Media | null> {
-    return prisma.media.findUnique({
+    return await this.mediaRepository.findOne({
       where: { id }
     });
   }
 
   async getMediaByNode(nodeId: string): Promise<Media[]> {
-    return prisma.media.findMany({
+    return await this.mediaRepository.find({
       where: { nodeId },
-      orderBy: { createdAt: 'asc' }
+      order: { createdAt: 'ASC' }
     });
   }
 
   async getMediaByIds(ids: string[]): Promise<Media[]> {
-    return prisma.media.findMany({
+    return await this.mediaRepository.find({
       where: {
-        id: { in: ids }
+        id: { in: ids } as any
       },
-      orderBy: { createdAt: 'asc' }
+      order: { createdAt: 'ASC' }
     });
   }
 
   async updateMedia(id: string, data: { nodeId?: string }): Promise<Media> {
-    return prisma.media.update({
-      where: { id },
-      data
-    });
+    await this.mediaRepository.update({ id }, data);
+    const updated = await this.mediaRepository.findOne({ where: { id } });
+    if (!updated) {
+      throw new Error('Media not found after update');
+    }
+    return updated;
   }
 
   async deleteMedia(id: string): Promise<void> {
-    const media = await prisma.media.findUnique({
+    const media = await this.mediaRepository.findOne({
       where: { id }
     });
 
@@ -75,9 +79,7 @@ export class MediaService {
     }
 
     // Delete from database
-    await prisma.media.delete({
-      where: { id }
-    });
+    await this.mediaRepository.delete({ id });
 
     // Delete files from disk
     await storageService.deleteImageAndThumbnail(media.filename);
@@ -87,10 +89,10 @@ export class MediaService {
     // Find media not attached to any node and older than 24 hours
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    const orphaned = await prisma.media.findMany({
+    const orphaned = await this.mediaRepository.find({
       where: {
-        nodeId: null,
-        createdAt: { lt: oneDayAgo }
+        nodeId: null as any,
+        createdAt: LessThan(oneDayAgo)
       }
     });
 

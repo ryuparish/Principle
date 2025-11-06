@@ -52,20 +52,16 @@ This will:
 
 **You'll see:** A lot of npm install output, followed by "✅ Created [service]/.env" messages.
 
-### Step 4: Set Up Databases
+### Step 4: Database Setup
 
-```bash
-npm run prisma:migrate
-```
+No manual setup needed! TypeORM automatically creates the SQLite databases and schema on first startup.
 
-This creates 3 SQLite database files:
+The databases will be created at:
 - `node-service/dev.db` - Your concept maps and nodes
 - `edge-service/dev.db` - Connections between nodes
 - `media-service/dev.db` - Image metadata
 
-**Takes:** ~10 seconds
-
-**You'll see:** Migration success messages for each service.
+**Note:** The databases are created when you first run `npm run dev:all` (next step).
 
 ---
 
@@ -646,9 +642,10 @@ npm run dev:all
 ```bash
 npm run kill
 rm node-service/dev.db edge-service/dev.db media-service/dev.db
-npm run prisma:migrate
 npm run dev:all
 ```
+
+(TypeORM will automatically recreate the databases on startup)
 
 ---
 

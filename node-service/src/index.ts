@@ -1,7 +1,8 @@
+import 'reflect-metadata';  // MUST BE FIRST for TypeORM decorators
 import express, { Request, Response } from 'express';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { PrismaClient } from '../node_modules/.prisma/client-node';
+import { AppDataSource } from './data-source';
 import mindmapRoutes from './routes/mindmap.routes';
 import nodeRoutes from './routes/node.routes';
 
@@ -9,7 +10,6 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const prisma = new PrismaClient();
 
 // Middleware
 app.use(express.json());
@@ -20,7 +20,8 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({
     status: 'healthy',
     service: 'node-service',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    database: 'TypeORM + SQLite'
   });
 });
 
@@ -29,6 +30,7 @@ app.get('/', (req: Request, res: Response) => {
   res.json({
     message: 'Principle Node Service',
     version: '1.0.0',
+    orm: 'TypeORM',
     endpoints: {
       mindmaps: '/mindmaps',
       nodes: '/nodes'
@@ -40,13 +42,23 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/mindmaps', mindmapRoutes);
 app.use('/nodes', nodeRoutes);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`✅ Node Service running on http://localhost:${PORT}`);
-});
+// Initialize TypeORM and start server
+AppDataSource.initialize()
+  .then(() => {
+    console.log('✅ TypeORM connected to SQLite database');
+
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`✅ Node Service running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error('❌ TypeORM connection failed:', error);
+    process.exit(1);
+  });
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-  await prisma.$disconnect();
+  await AppDataSource.destroy();
   process.exit(0);
 });

@@ -1,0 +1,33 @@
+Principle - Interactive World Concept Map Application
+Copyright 2025 Principle Contributors
+
+This product includes software developed by the Principle project
+(https://github.com/[your-username]/Principle).
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+---
+
+This software includes the following open source components:
+
+- React (MIT License)
+- TypeScript (Apache License 2.0)
+- TypeORM (MIT License)
+- Express (MIT License)
+- Vite (MIT License)
+- TipTap (MIT License)
+- ReactFlow (MIT License)
+- Zustand (MIT License)
+- better-sqlite3 (MIT License)
+
+For complete license information, see the LICENSE file.

@@ -1,9 +1,10 @@
+import 'reflect-metadata';  // MUST BE FIRST for TypeORM decorators
 import express, { Request, Response } from 'express';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
-import { prisma } from './lib/prisma';
+import { AppDataSource } from './data-source';
 import mediaRoutes from './routes/media.routes';
 
 dotenv.config();
@@ -24,7 +25,8 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({
     status: 'healthy',
     service: 'media-service',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    database: 'TypeORM + SQLite'
   });
 });
 
@@ -33,6 +35,7 @@ app.get('/', (req: Request, res: Response) => {
   res.json({
     message: 'Principle Media Service',
     version: '1.0.0',
+    orm: 'TypeORM',
     endpoints: {
       health: 'GET /health',
       upload: 'POST /upload',
@@ -49,13 +52,23 @@ app.get('/', (req: Request, res: Response) => {
 // Media routes
 app.use('/', mediaRoutes);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(` Media Service running on http://localhost:${PORT}`);
-});
+// Initialize TypeORM and start server
+AppDataSource.initialize()
+  .then(() => {
+    console.log('✅ TypeORM connected to SQLite database');
+
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`✅ Media Service running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error('❌ TypeORM connection failed:', error);
+    process.exit(1);
+  });
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-  await prisma.$disconnect();
+  await AppDataSource.destroy();
   process.exit(0);
 });

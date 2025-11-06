@@ -63,18 +63,14 @@ This installs dependencies for all services (API Gateway, Node Service, Edge Ser
 
 **Note:** If you need to recreate `.env` files later, run: `npm run setup`
 
-### 4. Run Database Migrations
+### 4. Database Setup
 
-```bash
-npm run prisma:migrate
-```
+No manual migration needed! TypeORM automatically creates the SQLite databases and schema on first startup.
 
-This creates the SQLite databases and sets up the schema for all services. You'll see:
-- `node-service/dev.db` - Stores concept map nodes
+The databases will be created at:
+- `node-service/dev.db` - Stores concept maps, nodes, and edges
 - `edge-service/dev.db` - Stores connections between nodes
 - `media-service/dev.db` - Stores media metadata
-
-**Migration takes:** ~10 seconds
 
 ### 5. Start the Application
 
@@ -162,7 +158,7 @@ media-service/dev.db       # Media metadata
 
 **Backup:** Just copy these 3 `.db` files
 
-**Reset:** Delete these files and run `npm run prisma:migrate` again
+**Reset:** Delete these files and restart services (they'll be recreated automatically)
 
 ---
 
@@ -215,8 +211,8 @@ Reinstalls all dependencies across services.
 # Delete databases
 rm node-service/dev.db edge-service/dev.db media-service/dev.db
 
-# Recreate
-npm run prisma:migrate
+# Restart services (databases will be recreated)
+npm run restart
 ```
 
 ---
@@ -260,12 +256,6 @@ npm run kill
 
 # Restart all services
 npm run restart
-
-# Generate Prisma clients
-npm run prisma:generate
-
-# Run database migrations
-npm run prisma:migrate
 ```
 
 ---
@@ -329,6 +319,7 @@ cd client && npm run dev
 **Stack:**
 - **Frontend:** React 18 + ReactFlow + TipTap + Vite
 - **Backend:** 6 Node.js/Express microservices
+- **ORM:** TypeORM (type-safe database access)
 - **Database:** 3 SQLite databases (file-based)
 - **Queue:** better-queue (in-memory with retry logic)
 - **State Management:** Zustand
@@ -372,13 +363,40 @@ cd client && npm run dev
 
 ## License
 
-[Add your license here]
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+See [LICENSE](./LICENSE) for the full license text.
 
 ---
 
 ## Contributing
 
-[Add contribution guidelines here]
+Contributions are welcome! By contributing to Principle, you agree that your contributions will be licensed under the Apache License 2.0.
+
+**How to Contribute:**
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+**Code of Conduct:**
+- Be respectful and constructive
+- Write clear commit messages
+- Follow existing code style
+- Add tests for new features
+
+See [LICENSE](./LICENSE) for license details.
 
 ---
 

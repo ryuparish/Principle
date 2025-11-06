@@ -5,14 +5,8 @@ export class ConceptMapController {
   async getAll(req: Request, res: Response) {
     try {
       const conceptMaps = await conceptMapService.getAllConceptMaps();
-
-      // Parse JSON strings back to objects for client
-      const parsedConceptMaps = conceptMaps.map(cm => ({
-        ...cm,
-        viewport: JSON.parse(cm.viewport as any)
-      }));
-
-      res.json({ mindmaps: parsedConceptMaps });
+      // TypeORM transformers already convert JSON strings to objects
+      res.json({ mindmaps: conceptMaps });
     } catch (error) {
       console.error('Error fetching concept maps:', error);
       res.status(500).json({ error: 'Failed to fetch concept maps' });
@@ -28,21 +22,8 @@ export class ConceptMapController {
         return res.status(404).json({ error: 'Concept map not found' });
       }
 
-      // Parse JSON strings back to objects for client
-      const parsedConceptMap = {
-        ...conceptMap,
-        viewport: JSON.parse(conceptMap.viewport as any),
-        nodes: conceptMap.nodes?.map(node => ({
-          ...node,
-          position: JSON.parse(node.position as any),
-          content: JSON.parse(node.content as any),
-          style: JSON.parse(node.style as any),
-          imageIds: JSON.parse(node.imageIds as any),
-          tags: JSON.parse(node.tags as any)
-        }))
-      };
-
-      res.json(parsedConceptMap);
+      // TypeORM transformers already convert JSON strings to objects
+      res.json(conceptMap);
     } catch (error) {
       console.error('Error fetching concept map:', error);
       res.status(500).json({ error: 'Failed to fetch concept map' });
@@ -59,13 +40,8 @@ export class ConceptMapController {
 
       const conceptMap = await conceptMapService.createConceptMap({ name, description });
 
-      // Parse JSON strings back to objects for client
-      const parsedConceptMap = {
-        ...conceptMap,
-        viewport: JSON.parse(conceptMap.viewport as any)
-      };
-
-      res.status(201).json(parsedConceptMap);
+      // TypeORM transformers already convert JSON strings to objects
+      res.status(201).json(conceptMap);
     } catch (error) {
       console.error('Error creating concept map:', error);
       res.status(500).json({ error: 'Failed to create concept map' });
@@ -83,13 +59,8 @@ export class ConceptMapController {
         viewport
       });
 
-      // Parse JSON strings back to objects for client
-      const parsedConceptMap = {
-        ...conceptMap,
-        viewport: JSON.parse(conceptMap.viewport as any)
-      };
-
-      res.json(parsedConceptMap);
+      // TypeORM transformers already convert JSON strings to objects
+      res.json(conceptMap);
     } catch (error: any) {
       if (error.code === 'P2025') {
         return res.status(404).json({ error: 'Concept map not found' });
