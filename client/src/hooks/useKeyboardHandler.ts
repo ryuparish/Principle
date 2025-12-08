@@ -120,7 +120,7 @@ export const useKeyboardHandler = () => {
     // Prevent default for most vim keys
     const shouldPreventDefault =
       vim.state.mode !== 'normal' || // Always prevent in non-normal modes
-      'hjklwebfnpxyducvioasgtm:/?.'.includes(vimKey.key.toLowerCase()) ||
+      'hjklwebfnpxyducvioasgtm:?.'.includes(vimKey.key.toLowerCase()) ||
       vimKey.key === 'Tab' ||
       vimKey.key === 'Escape' ||
       vimKey.key === 'Enter' ||
@@ -156,12 +156,6 @@ export const useKeyboardHandler = () => {
       // : - enter command mode
       if (vimKey.key === ':' && vim.state.shift) {
         vim.enterCommandMode();
-        return;
-      }
-
-      // / - enter search mode
-      if (vimKey.key === '/') {
-        vim.startSearch('');
         return;
       }
 
