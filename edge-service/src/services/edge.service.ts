@@ -2,6 +2,7 @@ import { Edge } from '../entities/Edge';
 import { AppDataSource } from '../data-source';
 
 export interface CreateEdgeInput {
+  id?: string;
   conceptMapId: string;
   sourceNodeId: string;
   targetNodeId: string;
@@ -32,6 +33,7 @@ export class EdgeService {
 
   async createEdge(data: CreateEdgeInput): Promise<Edge> {
     const edge = this.edgeRepository.create({
+      ...(data.id && { id: data.id }), // Preserve ID if provided (for undo/redo)
       conceptMapId: data.conceptMapId,
       sourceNodeId: data.sourceNodeId,
       targetNodeId: data.targetNodeId,

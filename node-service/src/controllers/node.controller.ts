@@ -107,6 +107,20 @@ export class NodeController {
     }
   }
 
+  async undelete(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const node = await nodeService.undeleteNode(id);
+      res.json(node);
+    } catch (error: any) {
+      if (error.message === 'Node not found after undelete') {
+        return res.status(404).json({ error: 'Node not found' });
+      }
+      console.error('Error undeleting node:', error);
+      res.status(500).json({ error: 'Failed to undelete node' });
+    }
+  }
+
   async search(req: Request, res: Response) {
     try {
       const { conceptMapId, q } = req.query;

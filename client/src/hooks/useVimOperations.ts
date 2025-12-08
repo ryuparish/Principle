@@ -23,6 +23,7 @@ export const useVimOperations = () => {
     edges: storeEdges,
     deleteNodes,
     deleteEdge,
+    deleteEdgeWithoutHistory,
     createNode,
     createEdge,
     updateNodeLocal
@@ -43,7 +44,7 @@ export const useVimOperations = () => {
     }
 
     // Execute delete
-    await executeDelete(nodes, edges, deleteNodes, deleteEdge);
+    await executeDelete(nodes, edges, deleteNodes, deleteEdgeWithoutHistory);
 
     // Clear focus if focused node was deleted
     if (vim.state.focusedNodeId && nodes.some(n => n.id === vim.state.focusedNodeId)) {
@@ -52,7 +53,7 @@ export const useVimOperations = () => {
 
     // Clear selection
     vim.clearSelection();
-  }, [vim, storeNodes, storeEdges, deleteNodes, deleteEdge]);
+  }, [vim, storeNodes, storeEdges, deleteNodes, deleteEdgeWithoutHistory]);
 
   // Yank operation
   const yankOperation = useCallback((object: GraphObject) => {

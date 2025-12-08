@@ -3,6 +3,7 @@ import { AppDataSource } from '../data-source';
 import { Like } from 'typeorm';
 
 export interface CreateNodeInput {
+  id?: string;
   conceptMapId: string;
   title: string;
   content?: any;
@@ -46,6 +47,7 @@ export class NodeService {
 
   async createNode(data: CreateNodeInput): Promise<Node> {
     const node = this.nodeRepository.create({
+      ...(data.id && { id: data.id }), // Preserve ID if provided (for undo/redo)
       conceptMapId: data.conceptMapId,
       title: data.title,
       content: data.content || {},
@@ -83,6 +85,23 @@ export class NodeService {
         deletedAt: new Date()
       }
     );
+  }
+
+  async undeleteNode(id: string): Promise<Node> {
+    // Un-delete (restore soft-deleted node)
+    await this.nodeRepository.update(
+      { id },
+      {
+        isDeleted: false,
+        deletedAt: null
+      }
+    );
+
+    const node = await this.nodeRepository.findOne({ where: { id } });
+    if (!node) {
+      throw new Error('Node not found after undelete');
+    }
+    return node;
   }
 
   async searchNodes(conceptMapId: string, query: string): Promise<Node[]> {

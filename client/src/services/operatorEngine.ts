@@ -94,18 +94,18 @@ export const executeDelete = async (
   nodes: ConceptMapNode[],
   edges: ConceptMapEdge[],
   deleteNodesFn: (ids: string[]) => Promise<void>,
-  deleteEdgeFn: (id: string) => Promise<void>
+  deleteEdgeWithoutHistoryFn: (id: string) => Promise<void>
 ): Promise<void> => {
-  // Delete edges first
+  // Delete edges first (without saving history for each edge)
   for (const edge of edges) {
     try {
-      await deleteEdgeFn(edge.id);
+      await deleteEdgeWithoutHistoryFn(edge.id);
     } catch (error) {
       console.error(`Failed to delete edge ${edge.id}:`, error);
     }
   }
 
-  // Then delete nodes
+  // Then delete nodes (this will save history once for the entire operation)
   const nodeIds = nodes.map(n => n.id);
   if (nodeIds.length > 0) {
     try {

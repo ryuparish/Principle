@@ -3,6 +3,7 @@ import { VimKeyEvent, GraphObject } from '../types/vim.types';
 import { useVimMode } from './useVimMode';
 import { useGraphNavigation } from './useGraphNavigation';
 import { useVimOperations } from './useVimOperations';
+import { useConceptMapStore } from '../store/conceptMapStore';
 
 /**
  * Keyboard handler hook
@@ -531,17 +532,27 @@ export const useKeyboardHandler = () => {
         return;
       }
 
-      // u - undo (will be implemented when history is added)
+      // u - undo
       if (vimKey.key === 'u' && !vimKey.ctrl && !vimKey.meta) {
-        // TODO: Implement undo
-        console.log('Undo not yet implemented');
+        const { undo, canUndo } = useConceptMapStore.getState();
+        if (canUndo()) {
+          undo();
+          console.log('[VIM] Undo performed');
+        } else {
+          console.log('[VIM] Nothing to undo');
+        }
         return;
       }
 
       // Ctrl+r - redo
       if (vimKey.ctrl && vimKey.key === 'r') {
-        // TODO: Implement redo
-        console.log('Redo not yet implemented');
+        const { redo, canRedo } = useConceptMapStore.getState();
+        if (canRedo()) {
+          redo();
+          console.log('[VIM] Redo performed');
+        } else {
+          console.log('[VIM] Nothing to redo');
+        }
         return;
       }
 
@@ -562,6 +573,7 @@ export const useKeyboardHandler = () => {
         console.log('[VIM] Deleting selection, selected nodes:', Array.from(vim.state.selectedNodeIds));
         await operations.deleteSelection();
         vim.enterNormalMode();
+        vim.clearSelection();
         return;
       }
 
@@ -569,6 +581,7 @@ export const useKeyboardHandler = () => {
       if (vimKey.key === 'y' && !vimKey.ctrl && !vimKey.meta) {
         operations.yankSelection();
         vim.enterNormalMode();
+        vim.clearSelection();
         return;
       }
 
@@ -576,6 +589,7 @@ export const useKeyboardHandler = () => {
       if (vimKey.key === 'x' && !vimKey.ctrl && !vimKey.meta) {
         await operations.deleteSelection();
         vim.enterNormalMode();
+        vim.clearSelection();
         return;
       }
     }

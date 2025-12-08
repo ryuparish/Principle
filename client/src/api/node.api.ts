@@ -28,6 +28,11 @@ export const nodeApi = {
     await apiClient.delete(`/nodes/${id}`);
   },
 
+  undelete: async (id: string): Promise<ConceptMapNode> => {
+    const response = await apiClient.patch(`/nodes/${id}/undelete`);
+    return response.data;
+  },
+
   search: async (conceptMapId: string, query: string): Promise<ConceptMapNode[]> => {
     const response = await apiClient.get('/nodes/search', {
       params: { mindmapId: conceptMapId, q: query }

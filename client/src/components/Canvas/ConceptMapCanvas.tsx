@@ -40,7 +40,6 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
     loading,
     currentConceptMap,
     loadConceptMap,
-    loadEdges,
     createNode,
     updateNodeLocal,
     deleteNodes,
@@ -73,8 +72,8 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
   // Load concept map data when conceptMapId changes
   useEffect(() => {
     loadConceptMap(conceptMapId);
-    loadEdges(conceptMapId);
-  }, [conceptMapId, loadConceptMap, loadEdges]);
+    // loadEdges is now called internally by loadConceptMap
+  }, [conceptMapId, loadConceptMap]);
 
   // Sync store nodes to React Flow
   useEffect(() => {
