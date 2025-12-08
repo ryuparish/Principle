@@ -24,6 +24,8 @@ import VimStatusBar from '../Vim/VimStatusBar';
 import VimOverlay from '../Vim/VimOverlay';
 import EdgeLabelEditor from '../Vim/EdgeLabelEditor';
 import { VimProvider } from '../../contexts/VimContext';
+import Spinner from '../Loading/Spinner';
+import SearchBar from '../Search/SearchBar';
 
 const nodeTypes = {
   custom: CustomNode,
@@ -54,9 +56,10 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
     x: number;
     y: number;
   } | null>(null);
-  const { project } = useReactFlow();
+  const { project, setCenter, getNode } = useReactFlow();
   const currentConceptMapIdRef = React.useRef<string | null>(null);
   const draggedNodePositions = React.useRef<Map<string, { x: number; y: number }>>(new Map());
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Initialize vim mode
   const { vim } = useKeyboardHandler();
@@ -68,6 +71,19 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
       vim.setFocus(nodes[0].id);
     }
   }, [nodes, vim]);
+
+  // Global keyboard shortcut for search (Ctrl+K / Cmd+K)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   // Load concept map data when conceptMapId changes
   useEffect(() => {
@@ -304,8 +320,48 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
     [createNode, project]
   );
 
+  // Handle search node selection
+  const handleSelectNode = useCallback(
+    (nodeId: string) => {
+      // Focus and center the selected node
+      vim.setFocus(nodeId);
+
+      // Get the actual React Flow node with measured dimensions
+      const reactFlowNode = getNode(nodeId);
+      if (reactFlowNode) {
+        // Calculate the center of the node
+        // React Flow stores measured width/height after render
+        const nodeWidth = reactFlowNode.width || 150; // fallback to min-width
+        const nodeHeight = reactFlowNode.height || 50; // fallback estimate
+
+        const centerX = reactFlowNode.position.x + nodeWidth / 2;
+        const centerY = reactFlowNode.position.y + nodeHeight / 2;
+
+        setCenter(centerX, centerY, {
+          zoom: 1.5,
+          duration: 800
+        });
+      }
+
+      setSearchOpen(false);
+    },
+    [vim, setCenter, getNode]
+  );
+
+  // Show loading spinner while initial load
+  if (loading && nodes.length === 0) {
+    return <Spinner fullscreen message="Loading concept map..." />;
+  }
+
   return (
     <div style={{ width: '100%', height: '100vh' }}>
+      {searchOpen && (
+        <SearchBar
+          onSelectNode={handleSelectNode}
+          onClose={() => setSearchOpen(false)}
+        />
+      )}
+
       <ReactFlow
         nodes={nodes}
         edges={edges}

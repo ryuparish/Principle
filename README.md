@@ -258,6 +258,28 @@ npm run kill
 npm run restart
 ```
 
+### Testing Commands
+
+```bash
+# Run unit tests
+cd client && npm test
+
+# Run unit tests with UI
+cd client && npm run test:ui
+
+# Run tests with coverage
+cd client && npm run test:coverage
+
+# Run E2E tests
+cd client && npm run test:e2e
+
+# Run E2E tests with UI
+cd client && npm run test:e2e:ui
+
+# View E2E test report
+cd client && npm run test:e2e:report
+```
+
 ---
 
 ## Individual Service Commands
@@ -289,6 +311,37 @@ cd client && npm run dev
 
 ---
 
+## Keyboard Shortcuts
+
+### Global Shortcuts (Always Available)
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+K` / `Cmd+K` | Open search |
+| `Ctrl+;` | Toggle Vim mode |
+| `Escape` | Close search / Exit modes |
+
+### Search Mode (When Search is Open)
+
+| Shortcut | Action |
+|----------|--------|
+| `↑` / `↓` | Navigate search results |
+| `Enter` | Select highlighted result |
+| `Escape` | Close search |
+
+### Vim Mode Shortcuts
+
+See [GETTING_STARTED.md](./GETTING_STARTED.md) for complete Vim mode documentation including:
+- Normal mode navigation (`h`, `j`, `k`, `l`)
+- Insert mode (`i`, `a`, `o`)
+- Visual mode (`v`)
+- Edge mode (`e`)
+- Edge Edit mode (`Shift+E`)
+- Move mode (`m`)
+- Command mode (`:`)
+
+---
+
 ## Features
 
 ### ✅ Vim Mode
@@ -307,6 +360,28 @@ cd client && npm run dev
 - Edge Edit mode (`Shift+E`) to view/delete/navigate edges
 - Navigate along edges with `h` (source) and `l` (target)
 
+### ✅ Search & Navigation
+- Global search with `Ctrl+K` / `Cmd+K`
+- Search across node titles, content, and tags
+- Keyboard navigation with arrow keys
+- Instant node focusing and zoom on selection
+
+### ✅ Polish & UX (Phase 5)
+- Toast notifications for user feedback
+- Error boundary for crash recovery
+- Loading indicators and skeleton screens
+- Structured logging system with export
+- Comprehensive keyboard shortcuts
+- Auto-save functionality
+- Undo/Redo system
+
+### ✅ Testing Infrastructure
+- Unit tests with Vitest
+- Component tests with React Testing Library
+- E2E tests with Playwright
+- Coverage reporting
+- CI/CD ready
+
 ### ✅ Offline-First
 - All data stored locally in SQLite
 - No external API calls
@@ -323,6 +398,7 @@ cd client && npm run dev
 - **Database:** 3 SQLite databases (file-based)
 - **Queue:** better-queue (in-memory with retry logic)
 - **State Management:** Zustand
+- **Testing:** Vitest + React Testing Library + Playwright
 - **Type Safety:** TypeScript everywhere
 
 **Data Flow:**
@@ -342,6 +418,7 @@ cd client && npm run dev
 
 **Getting Started:**
 - [GETTING_STARTED.md](./GETTING_STARTED.md) - **Complete beginner's guide** with Vim mode tutorial
+- [TESTING.md](./docs/TESTING.md) - **Testing guide** with unit and E2E test examples
 
 **Technical Documentation:**
 - [PRD.md](./PRD.md) - Full product requirements
@@ -349,6 +426,7 @@ cd client && npm run dev
 - [Phase_1_Core_Mindmap_Nodes.md](./Phase_1_Core_Mindmap_Nodes.md) - Node implementation
 - [Phase_2_Node_Content_Editor.md](./Phase_2_Node_Content_Editor.md) - TipTap integration
 - [Phase_3_Edge_Persistence.md](./Phase_3_Edge_Persistence.md) - Edge implementation
+- [Phase_5_Polish_and_UX.md](./Phase_5_Polish_and_UX.md) - Polish, UX, and testing implementation
 
 ---
 
