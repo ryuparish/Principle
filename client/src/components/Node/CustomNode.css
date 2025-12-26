@@ -1,8 +1,8 @@
 .custom-node {
   padding: 12px 20px;
   border-radius: 8px;
-  background: white;
-  border: 2px solid #0066cc;
+  background: var(--theme-nodeBackground, white);
+  border: 2px solid var(--theme-nodeBorder, #0066cc);
   min-width: 150px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -35,18 +35,37 @@
 
 .node-content {
   display: flex;
-  align-items: center;
+  flex-direction: row;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
+  width: 100%;
+}
+
+.node-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
 }
 
 .node-title {
   font-size: 14px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: var(--theme-nodeText, #1a1a1a);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.node-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 100%;
 }
 
 .node-title-input {

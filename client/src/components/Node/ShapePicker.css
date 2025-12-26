@@ -1,0 +1,189 @@
+/* Shape Picker Container */
+.shape-picker {
+  position: relative;
+}
+
+/* Shape Picker Button */
+.shape-picker-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shape-picker-button:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.shape-picker-icon {
+  font-size: 1.125rem;
+}
+
+.shape-picker-label {
+  min-width: 100px;
+  text-align: left;
+}
+
+.shape-picker-arrow {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* Dropdown */
+.shape-picker-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  min-width: 320px;
+  max-height: 500px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: dropdownSlideIn 0.2s ease-out;
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Section */
+.shape-picker-section {
+  padding: 0.75rem 0;
+}
+
+.shape-picker-section + .shape-picker-section {
+  border-top: 1px solid #e5e7eb;
+}
+
+.shape-picker-section-title {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Shape Item */
+.shape-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  text-align: left;
+}
+
+.shape-picker-item:hover {
+  background: #f3f4f6;
+}
+
+.shape-picker-item.active {
+  background: #eff6ff;
+}
+
+/* Shape Preview */
+.shape-picker-preview {
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+  background: #f9fafb;
+  flex-shrink: 0;
+}
+
+.shape-preview-svg {
+  width: 100%;
+  height: 100%;
+  padding: 0.25rem;
+}
+
+.shape-preview-css {
+  width: 2rem;
+  height: 2rem;
+  background: #e0e0e0;
+  border: 2px solid #666;
+}
+
+.shape-preview-css.shape-rectangle {
+  border-radius: 0;
+}
+
+.shape-preview-css.shape-rounded-rectangle {
+  border-radius: 0.25rem;
+}
+
+.shape-preview-css.shape-circle {
+  border-radius: 50%;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0;
+}
+
+/* Shape Info */
+.shape-picker-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.shape-picker-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.shape-picker-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.125rem;
+}
+
+.shape-picker-check {
+  color: #3b82f6;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* Scrollbar */
+.shape-picker-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.shape-picker-dropdown::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+.shape-picker-dropdown::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.shape-picker-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

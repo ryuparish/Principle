@@ -1,10 +1,15 @@
 import React, { useState, memo, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { ConceptMapNode } from '../../types';
+import { NodeShape, SHAPE_CONFIGS } from '../../types/shapes';
+import { SVG_SHAPES } from './shapes/SvgShapes';
 import NodeEditorModal from './NodeEditorModal';
 import { useVim } from '../../contexts/VimContext';
 import { useConceptMapStore } from "../../store/conceptMapStore";
+import { TagChip } from '../Tags/TagChip';
+import { useTagStore } from '../../store/tagStore';
 import './CustomNode.css';
+import './NodeShapes.css';
 
 interface CustomNodeData {
   label: string;
@@ -18,6 +23,7 @@ const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, isConnectable, 
   const inputRef = useRef<HTMLInputElement>(null);
   const vim = useVim();
   const { updateNode } = useConceptMapStore();
+  const { toggleTagFilter } = useTagStore();
 
   // Check if this node is focused and in insert mode
   const isFocused = vim.state.focusedNodeId === id;
@@ -93,43 +99,148 @@ const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, isConnectable, 
     data.node.content.content &&
     data.node.content.content.length > 0;
 
-  return (
-    <>
-      <div
-        className={`custom-node ${isFocused ? 'focused' : ''} ${isInInsertMode ? 'insert-mode' : ''}`}
-        onClick={handleNodeClick}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-      >
+  // Handle tag click - toggle filter
+  const handleTagClick = (tagName: string) => {
+    toggleTagFilter(tagName);
+  };
+
+  // Get shape config
+  const shape = (data.node.shape as NodeShape) || 'rounded-rectangle';
+  const shapeConfig = SHAPE_CONFIGS[shape];
+  const SvgShapeComponent = shapeConfig.useSvg ? SVG_SHAPES[shape as keyof typeof SVG_SHAPES] : null;
+
+  // Render handles dynamically based on shape
+  const renderHandles = () => {
+    const handles = [];
+    const offsets = shapeConfig.handleOffsets || {};
+
+    if (shapeConfig.handles.top) {
+      const topOffset = offsets.top || {};
+      handles.push(
         <Handle
-          type="target"
+          key="top"
+          id="top"
+          type="source"
           position={Position.Top}
           isConnectable={isConnectable}
           className="node-handle"
+          style={{
+            top: topOffset.y || '0%',
+            left: `calc(50% + ${topOffset.x || '0%'})`
+          }}
         />
-        <div className="node-content">
-          {isInInsertMode ? (
-            <input
-              ref={inputRef}
-              type="text"
-              className="node-title-input"
-              value={titleValue}
-              onChange={handleTitleChange}
-              onBlur={handleTitleBlur}
-            />
-          ) : (
-            <div className="node-title">{data.label}</div>
-          )}
-          {hasContent && (
-            <div className="node-has-content-indicator">📝</div>
-          )}
-        </div>
+      );
+    }
+    if (shapeConfig.handles.right) {
+      const rightOffset = offsets.right || {};
+      handles.push(
         <Handle
+          key="right"
+          id="right"
+          type="source"
+          position={Position.Right}
+          isConnectable={isConnectable}
+          className="node-handle"
+          style={{
+            right: rightOffset.x || '0%',
+            top: `calc(50% + ${rightOffset.y || '0%'})`
+          }}
+        />
+      );
+    }
+    if (shapeConfig.handles.bottom) {
+      const bottomOffset = offsets.bottom || {};
+      handles.push(
+        <Handle
+          key="bottom"
+          id="bottom"
           type="source"
           position={Position.Bottom}
           isConnectable={isConnectable}
           className="node-handle"
+          style={{
+            bottom: bottomOffset.y ? `calc(0% - ${bottomOffset.y})` : '0%',
+            left: `calc(50% + ${bottomOffset.x || '0%'})`
+          }}
         />
+      );
+    }
+    if (shapeConfig.handles.left) {
+      const leftOffset = offsets.left || {};
+      handles.push(
+        <Handle
+          key="left"
+          id="left"
+          type="source"
+          position={Position.Left}
+          isConnectable={isConnectable}
+          className="node-handle"
+          style={{
+            left: leftOffset.x || '0%',
+            top: `calc(50% + ${leftOffset.y || '0%'})`
+          }}
+        />
+      );
+    }
+    return handles;
+  };
+
+  return (
+    <>
+      <div
+        className={`custom-node ${shapeConfig.cssClass || ''} ${isFocused ? 'focused' : ''} ${isInInsertMode ? 'insert-mode' : ''}`}
+        onClick={handleNodeClick}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+      >
+        {renderHandles()}
+
+        {/* SVG background for complex shapes */}
+        {SvgShapeComponent && (
+          <div className="svg-shape-background">
+            <SvgShapeComponent
+              fill={data.node.style?.backgroundColor || 'var(--theme-nodeBackground, white)'}
+              stroke={data.node.style?.borderColor || 'var(--theme-nodeBorder, #0066cc)'}
+              strokeWidth={data.node.style?.borderWidth || 2}
+            />
+          </div>
+        )}
+
+        {/* Node content */}
+        <div className={`${SvgShapeComponent ? 'svg-shape-content' : ''} ${shapeConfig.contentClass || ''} node-content`}>
+          <div className="node-main">
+            {isInInsertMode ? (
+              <input
+                ref={inputRef}
+                type="text"
+                className="node-title-input"
+                value={titleValue}
+                onChange={handleTitleChange}
+                onBlur={handleTitleBlur}
+              />
+            ) : (
+              <>
+                <div className="node-title">{data.label}</div>
+                {data.node.tags && data.node.tags.length > 0 && (
+                  <div className="node-tags">
+                    {data.node.tags.map((tag, index) => (
+                      <TagChip
+                        key={`${tag}-${index}`}
+                        tagName={tag}
+                        size="sm"
+                        onClick={handleTagClick}
+                        interactive={true}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          {hasContent && (
+            <div className="node-has-content-indicator">📝</div>
+          )}
+        </div>
       </div>
 
       <NodeEditorModal

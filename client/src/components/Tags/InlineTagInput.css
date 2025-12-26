@@ -1,0 +1,37 @@
+.inline-tag-input-overlay {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 900;
+  max-width: 600px;
+  width: 90%;
+}
+
+.inline-tag-input-container {
+  background: var(--theme-nodeBackground);
+  border: 2px solid var(--theme-primary);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.inline-tag-input-header {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--theme-nodeText);
+  font-family: 'Courier New', monospace;
+}

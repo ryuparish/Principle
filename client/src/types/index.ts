@@ -26,6 +26,7 @@ export interface ConceptMapNode {
   content: any;
   position: Position;
   style: any;
+  shape: string;
   imageIds: string[];
   tags: string[];
   isDeleted: boolean;
@@ -44,6 +45,7 @@ export interface CreateNodeInput {
   position: Position;
   content?: any;
   style?: any;
+  shape?: string;
 }
 
 export interface UpdateNodeInput {
@@ -51,6 +53,7 @@ export interface UpdateNodeInput {
   content?: any;
   position?: Position;
   style?: any;
+  shape?: string;
 }
 
 export interface EdgeStyle {
@@ -66,15 +69,20 @@ export interface ConceptMapEdge {
   conceptMapId: string;
   sourceNodeId: string;
   targetNodeId: string;
+  sourceHandleId?: string;
+  targetHandleId?: string;
   label?: string;
   style: EdgeStyle;
   createdAt: string;
 }
 
 export interface CreateEdgeInput {
+  id?: string; // Optional - used for undo/redo to preserve IDs
   conceptMapId: string;
   sourceNodeId: string;
   targetNodeId: string;
+  sourceHandleId?: string;
+  targetHandleId?: string;
   label?: string;
   style?: EdgeStyle;
 }
@@ -97,4 +105,63 @@ export interface Media {
   thumbnailUrl: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// ============================================================================
+// TAG TYPES
+// ============================================================================
+
+/**
+ * Tag with metadata for organization and filtering
+ */
+export interface Tag {
+  /** Unique tag name (normalized to lowercase) */
+  name: string;
+  /** Display color for tag chips */
+  color: string;
+  /** Number of nodes using this tag */
+  count: number;
+  /** When the tag was first created */
+  createdAt: string;
+  /** Last time a node was tagged with this */
+  lastUsed: string;
+}
+
+/**
+ * Tag filtering configuration
+ */
+export interface TagFilter {
+  /** Tags to filter by */
+  tags: string[];
+  /** Match all tags (AND) or any tag (OR) */
+  mode: 'AND' | 'OR';
+}
+
+/**
+ * Association between a node and a tag
+ */
+export interface NodeTag {
+  nodeId: string;
+  tagName: string;
+  addedAt: string;
+}
+
+/**
+ * Tag autocomplete suggestion
+ */
+export interface TagSuggestion {
+  tagName: string;
+  frequency: number;
+  matchScore: number;
+}
+
+/**
+ * Tag statistics for analytics
+ */
+export interface TagStats {
+  totalTags: number;
+  totalTaggedNodes: number;
+  averageTagsPerNode: number;
+  mostUsedTags: Array<{ name: string; count: number }>;
+  unusedTags: string[];
 }

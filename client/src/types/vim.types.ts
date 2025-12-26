@@ -100,6 +100,9 @@ export interface VimState {
   // Edge label editor state
   edgeLabelEditorId: string | null; // Edge ID whose label is being edited
 
+  // Tag input state
+  tagInputOpen: boolean; // Whether tag input is open
+
   // Settings
   enabled: boolean; // Toggle vim mode on/off
 }
@@ -144,6 +147,7 @@ export const createInitialVimState = (): VimState => ({
   lastOperation: null,
   editorNodeId: null,
   edgeLabelEditorId: null,
+  tagInputOpen: false,
   enabled: true
 });
 
@@ -191,5 +195,7 @@ export type VimAction =
   | { type: 'CLOSE_EDITOR' }
   | { type: 'OPEN_EDGE_LABEL_EDITOR'; edgeId: string }
   | { type: 'CLOSE_EDGE_LABEL_EDITOR' }
+  | { type: 'OPEN_TAG_INPUT' }
+  | { type: 'CLOSE_TAG_INPUT' }
   | { type: 'TOGGLE_ENABLED' }
   | { type: 'RESET' };

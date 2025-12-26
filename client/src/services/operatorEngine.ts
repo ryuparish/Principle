@@ -93,9 +93,13 @@ export const resolveGraphObject = (
 export const executeDelete = async (
   nodes: ConceptMapNode[],
   edges: ConceptMapEdge[],
-  deleteNodesFn: (ids: string[]) => Promise<void>,
-  deleteEdgeWithoutHistoryFn: (id: string) => Promise<void>
+  deleteNodesFn: (ids: string[], skipHistory?: boolean) => Promise<void>,
+  deleteEdgeWithoutHistoryFn: (id: string) => Promise<void>,
+  saveHistoryFn: () => void
 ): Promise<void> => {
+  // CRITICAL: Save history BEFORE deleting anything (captures nodes + edges)
+  saveHistoryFn();
+
   // Delete edges first (without saving history for each edge)
   for (const edge of edges) {
     try {
@@ -105,11 +109,11 @@ export const executeDelete = async (
     }
   }
 
-  // Then delete nodes (this will save history once for the entire operation)
+  // Then delete nodes (skip history since we already saved it above)
   const nodeIds = nodes.map(n => n.id);
   if (nodeIds.length > 0) {
     try {
-      await deleteNodesFn(nodeIds);
+      await deleteNodesFn(nodeIds, true); // skipHistory = true
     } catch (error) {
       console.error('Failed to delete nodes:', error);
     }

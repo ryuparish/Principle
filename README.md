@@ -360,6 +360,13 @@ See [GETTING_STARTED.md](./GETTING_STARTED.md) for complete Vim mode documentati
 - Edge Edit mode (`Shift+E`) to view/delete/navigate edges
 - Navigate along edges with `h` (source) and `l` (target)
 
+### ✅ Node Shapes (Compute-Ready)
+- 12 different node shapes for architecture diagrams
+- CSS-based shapes: Rectangle, Rounded Rectangle, Circle
+- SVG-based shapes: Cylinder (DB), Hexagon (API), Diamond (Decision), Parallelogram (I/O), Cloud (External), Actor (User), Document, Queue, Storage
+- Smart handle positioning per shape
+- Shape picker integrated into node editor
+
 ### ✅ Search & Navigation
 - Global search with `Ctrl+K` / `Cmd+K`
 - Search across node titles, content, and tags

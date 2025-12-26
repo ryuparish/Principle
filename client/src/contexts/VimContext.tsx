@@ -77,6 +77,10 @@ interface VimContextValue {
   openEdgeLabelEditor: (edgeId: string) => void;
   closeEdgeLabelEditor: () => void;
 
+  // Tag input
+  openTagInput: () => void;
+  closeTagInput: () => void;
+
   // Settings
   toggleEnabled: () => void;
 
@@ -172,6 +176,10 @@ export const VimProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const openEdgeLabelEditor = useCallback((edgeId: string) => dispatch({ type: 'OPEN_EDGE_LABEL_EDITOR', edgeId }), []);
   const closeEdgeLabelEditor = useCallback(() => dispatch({ type: 'CLOSE_EDGE_LABEL_EDITOR' }), []);
 
+  // Tag input
+  const openTagInput = useCallback(() => dispatch({ type: 'OPEN_TAG_INPUT' }), []);
+  const closeTagInput = useCallback(() => dispatch({ type: 'CLOSE_TAG_INPUT' }), []);
+
   // Settings
   const toggleEnabled = useCallback(() => dispatch({ type: 'TOGGLE_ENABLED' }), []);
 
@@ -221,6 +229,8 @@ export const VimProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     closeEditor,
     openEdgeLabelEditor,
     closeEdgeLabelEditor,
+    openTagInput,
+    closeTagInput,
     toggleEnabled,
     reset
   }), [
@@ -266,6 +276,8 @@ export const VimProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     closeEditor,
     openEdgeLabelEditor,
     closeEdgeLabelEditor,
+    openTagInput,
+    closeTagInput,
     toggleEnabled,
     reset
   ]);

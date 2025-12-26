@@ -7,15 +7,18 @@ import ReactFlow, {
   MiniMap,
   useNodesState,
   useEdgesState,
-  addEdge,
   Connection,
   NodeChange,
   applyNodeChanges,
+  applyEdgeChanges,
   useReactFlow,
   ReactFlowProvider,
+  ConnectionMode,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import './ConceptMapCanvas.css';
 import { useConceptMapStore } from "../../store/conceptMapStore";
+import { useTagStore } from "../../store/tagStore";
 import { queueApi } from '../../api/queue.api';
 import CustomNode from '../Node/CustomNode';
 import EdgeContextMenu from '../Edge/EdgeContextMenu';
@@ -26,6 +29,9 @@ import EdgeLabelEditor from '../Vim/EdgeLabelEditor';
 import { VimProvider } from '../../contexts/VimContext';
 import Spinner from '../Loading/Spinner';
 import SearchBar from '../Search/SearchBar';
+import { TagSidebar } from '../Tags/TagSidebar';
+import { ThemePicker } from '../Theme/ThemePicker';
+import { InlineTagInput } from '../Tags/InlineTagInput';
 
 const nodeTypes = {
   custom: CustomNode,
@@ -48,6 +54,7 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
     createEdge,
     deleteEdge
   } = useConceptMapStore();
+  const { getFilteredNodes, syncTagsFromNodes, clearFilters } = useTagStore();
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
@@ -59,18 +66,99 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
   const { project, setCenter, getNode } = useReactFlow();
   const currentConceptMapIdRef = React.useRef<string | null>(null);
   const draggedNodePositions = React.useRef<Map<string, { x: number; y: number }>>(new Map());
+  const initialFocusHandledRef = React.useRef<boolean>(false);
+  const creatingInitialNodeRef = React.useRef<boolean>(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [tagSidebarOpen, setTagSidebarOpen] = useState(false);
 
   // Initialize vim mode
   const { vim } = useKeyboardHandler();
 
-  // Auto-focus first node when nodes are loaded
+  // Reset initial focus handler when concept map changes
   useEffect(() => {
-    if (vim.state.enabled && !vim.state.focusedNodeId && nodes.length > 0) {
-      // Focus first node by default
-      vim.setFocus(nodes[0].id);
+    initialFocusHandledRef.current = false;
+    creatingInitialNodeRef.current = false;
+  }, [conceptMapId]);
+
+  // Auto-focus closest node to viewport center when map loads (or create initial node)
+  useEffect(() => {
+    // Only run once per map load
+    if (initialFocusHandledRef.current) {
+      return;
     }
-  }, [nodes, vim]);
+
+    // Don't run if we're already creating a node
+    if (creatingInitialNodeRef.current) {
+      return;
+    }
+
+    // Wait until we have loaded the concept map (don't require vim to be enabled!)
+    if (!currentConceptMap || loading) {
+      return;
+    }
+
+    // Mark as handled IMMEDIATELY to prevent race conditions
+    initialFocusHandledRef.current = true;
+
+    // Calculate viewport center in flow coordinates
+    const screenCenterX = window.innerWidth / 2;
+    const screenCenterY = window.innerHeight / 2;
+    const viewportCenter = project({ x: screenCenterX, y: screenCenterY });
+
+    if (storeNodes.length === 0) {
+      // No nodes - create one at center with map name (regardless of vim status)
+      creatingInitialNodeRef.current = true;
+      (async () => {
+        try {
+          const newNode = await createNode(
+            currentConceptMap.name || 'Start',
+            viewportCenter
+          );
+          // Only set focus if vim is enabled
+          if (vim.state.enabled) {
+            vim.setFocus(newNode.id);
+          }
+        } catch (error) {
+          console.error('Failed to create initial node:', error);
+        } finally {
+          creatingInitialNodeRef.current = false;
+        }
+      })();
+    } else if (nodes.length > 0) {
+      // Find node closest to viewport center
+      let closestNode = nodes[0];
+      let minDistance = Infinity;
+
+      nodes.forEach((node) => {
+        // Get measured dimensions from React Flow node
+        const reactFlowNode = getNode(node.id);
+        const nodeWidth = reactFlowNode?.width || 150;
+        const nodeHeight = reactFlowNode?.height || 50;
+
+        // Calculate node center
+        const nodeCenter = {
+          x: node.position.x + nodeWidth / 2,
+          y: node.position.y + nodeHeight / 2
+        };
+
+        // Calculate distance to viewport center
+        const distance = Math.sqrt(
+          Math.pow(nodeCenter.x - viewportCenter.x, 2) +
+          Math.pow(nodeCenter.y - viewportCenter.y, 2)
+        );
+
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestNode = node;
+        }
+      });
+
+      // Focus the closest node (only if vim is enabled)
+      if (vim.state.enabled) {
+        vim.setFocus(closestNode.id);
+      }
+    }
+  }, [vim, storeNodes, nodes, currentConceptMap, loading, conceptMapId, project, getNode, createNode]);
 
   // Global keyboard shortcut for search (Ctrl+K / Cmd+K)
   useEffect(() => {
@@ -91,6 +179,13 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
     // loadEdges is now called internally by loadConceptMap
   }, [conceptMapId, loadConceptMap]);
 
+  // Sync tags from loaded nodes
+  useEffect(() => {
+    if (storeNodes.length > 0) {
+      syncTagsFromNodes(storeNodes);
+    }
+  }, [storeNodes, syncTagsFromNodes]);
+
   // Sync store nodes to React Flow
   useEffect(() => {
     // Don't sync with stale data while loading from database
@@ -109,10 +204,13 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
       currentConceptMapIdRef.current = conceptMapId;
     }
 
+    // Apply tag filtering
+    const filteredNodes = getFilteredNodes(storeNodes);
+
     setNodes((currentNodes) => {
       // If no current nodes, do full initialization from store
-      if (currentNodes.length === 0 && storeNodes.length > 0) {
-        return storeNodes.map((node) => ({
+      if (currentNodes.length === 0 && filteredNodes.length > 0) {
+        return filteredNodes.map((node) => ({
           id: node.id,
           type: 'custom',
           position: node.position,
@@ -123,23 +221,23 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
         }));
       }
 
-      // If store is empty, clear nodes
-      if (storeNodes.length === 0) {
+      // If filtered nodes are empty, clear nodes
+      if (filteredNodes.length === 0) {
         return [];
       }
 
       // Build ID sets for comparison
       const currentIds = new Set(currentNodes.map(n => n.id));
-      const storeIds = new Set(storeNodes.map(n => n.id));
+      const filteredIds = new Set(filteredNodes.map(n => n.id));
 
-      // If node IDs changed (add/delete), do full replacement
+      // If node IDs changed (add/delete/filter), do full replacement
       const idsChanged =
-        currentIds.size !== storeIds.size ||
-        !Array.from(storeIds).every(id => currentIds.has(id));
+        currentIds.size !== filteredIds.size ||
+        !Array.from(filteredIds).every(id => currentIds.has(id));
 
-      // Only sync positions if concept map changed OR IDs changed (add/delete)
+      // Only sync positions if concept map changed OR IDs changed (add/delete/filter)
       if (conceptMapChanged || idsChanged) {
-        return storeNodes.map((node) => ({
+        return filteredNodes.map((node) => ({
           id: node.id,
           type: 'custom',
           position: node.position,
@@ -152,7 +250,7 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
 
       // Otherwise, preserve React Flow positions and only update data properties
       return currentNodes.map((currentNode) => {
-        const storeNode = storeNodes.find((n) => n.id === currentNode.id);
+        const storeNode = filteredNodes.find((n) => n.id === currentNode.id);
         if (!storeNode) return currentNode;
 
         return {
@@ -165,7 +263,7 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
         };
       });
     });
-  }, [storeNodes, conceptMapId, loading, currentConceptMap]);
+  }, [storeNodes, conceptMapId, loading, currentConceptMap, getFilteredNodes]);
 
   // Convert store edges to React Flow edges
   useEffect(() => {
@@ -173,6 +271,8 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
       id: edge.id,
       source: edge.sourceNodeId,
       target: edge.targetNodeId,
+      sourceHandle: edge.sourceHandleId,
+      targetHandle: edge.targetHandleId,
       label: edge.label,
       type: edge.style.type || 'default',
       animated: edge.style.animated || false,
@@ -223,7 +323,7 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
   );
 
   const onEdgesChange = useCallback(
-    (changes: any) => setEdges((eds) => applyNodeChanges(changes, eds)),
+    (changes: any) => setEdges((eds) => applyEdgeChanges(changes, eds)),
     []
   );
 
@@ -233,7 +333,12 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
 
       try {
         // Create edge in database - React Flow edge will be added automatically via store update
-        await createEdge(connection.source, connection.target);
+        await createEdge(
+          connection.source,
+          connection.target,
+          connection.sourceHandle || undefined,
+          connection.targetHandle || undefined
+        );
       } catch (error) {
         console.error('Failed to create edge:', error);
       }
@@ -348,6 +453,11 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
     [vim, setCenter, getNode]
   );
 
+  // Allow all connections (source-to-source allowed for bidirectional edges)
+  const isValidConnection = useCallback(() => {
+    return true;
+  }, []);
+
   // Show loading spinner while initial load
   if (loading && nodes.length === 0) {
     return <Spinner fullscreen message="Loading concept map..." />;
@@ -373,6 +483,8 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
         onPaneClick={onPaneClick}
         onSelectionChange={onSelectionChange}
         nodeTypes={nodeTypes}
+        connectionMode={ConnectionMode.Loose}
+        isValidConnection={isValidConnection}
         selectionOnDrag
         selectionKeyCode="Shift"
         multiSelectionKeyCode="Meta"
@@ -397,7 +509,32 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
         <EdgeLabelEditor edgeId={vim.state.edgeLabelEditorId} />
       )}
 
+      {/* Inline Tag Input */}
+      <InlineTagInput isOpen={vim.state.tagInputOpen} />
+
       <VimStatusBar vimState={vim.state} />
+
+      {/* Toolbar */}
+      <div className="canvas-toolbar">
+        <ThemePicker />
+        <button
+          className="tag-sidebar-toggle"
+          onClick={() => setTagSidebarOpen(!tagSidebarOpen)}
+          title="Toggle Tags"
+          aria-label="Toggle tag sidebar"
+        >
+          🏷️
+        </button>
+      </div>
+
+      {/* Tag Sidebar */}
+      <TagSidebar
+        isOpen={tagSidebarOpen}
+        onClose={() => {
+          setTagSidebarOpen(false);
+          clearFilters();
+        }}
+      />
     </div>
   );
 };

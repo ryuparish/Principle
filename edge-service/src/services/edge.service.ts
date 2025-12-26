@@ -6,6 +6,8 @@ export interface CreateEdgeInput {
   conceptMapId: string;
   sourceNodeId: string;
   targetNodeId: string;
+  sourceHandleId?: string;
+  targetHandleId?: string;
   label?: string;
   style?: any;
 }
@@ -37,6 +39,8 @@ export class EdgeService {
       conceptMapId: data.conceptMapId,
       sourceNodeId: data.sourceNodeId,
       targetNodeId: data.targetNodeId,
+      sourceHandleId: data.sourceHandleId,
+      targetHandleId: data.targetHandleId,
       label: data.label,
       style: data.style || {}
     });

@@ -39,7 +39,7 @@ export class EdgeController {
 
   async create(req: Request, res: Response) {
     try {
-      const { conceptMapId, sourceNodeId, targetNodeId, label, style } = req.body;
+      const { id, conceptMapId, sourceNodeId, targetNodeId, sourceHandleId, targetHandleId, label, style } = req.body;
 
       // Validation
       if (!conceptMapId) {
@@ -53,9 +53,12 @@ export class EdgeController {
       }
 
       const edge = await edgeService.createEdge({
+        id, // Pass ID to service (optional, for undo/redo)
         conceptMapId,
         sourceNodeId,
         targetNodeId,
+        sourceHandleId,
+        targetHandleId,
         label,
         style
       });

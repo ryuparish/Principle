@@ -12,6 +12,7 @@ export interface CreateNodeInput {
     y: number;
   };
   style?: any;
+  shape?: string;
 }
 
 export interface UpdateNodeInput {
@@ -24,6 +25,7 @@ export interface UpdateNodeInput {
   style?: any;
   imageIds?: string[];
   tags?: string[];
+  shape?: string;
 }
 
 export class NodeService {
@@ -52,7 +54,8 @@ export class NodeService {
       title: data.title,
       content: data.content || {},
       position: data.position,
-      style: data.style || {}
+      style: data.style || {},
+      shape: data.shape || 'rounded-rectangle'
     });
 
     return await this.nodeRepository.save(node);
@@ -66,6 +69,7 @@ export class NodeService {
     if (data.style !== undefined) updateData.style = data.style;
     if (data.imageIds !== undefined) updateData.imageIds = data.imageIds;
     if (data.tags !== undefined) updateData.tags = data.tags;
+    if (data.shape !== undefined) updateData.shape = data.shape;
 
     await this.nodeRepository.update({ id }, updateData);
 

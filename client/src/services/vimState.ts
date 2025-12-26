@@ -294,6 +294,12 @@ export const vimStateReducer = (state: VimState, action: VimAction): VimState =>
     case 'CLOSE_EDGE_LABEL_EDITOR':
       return { ...state, edgeLabelEditorId: null };
 
+    case 'OPEN_TAG_INPUT':
+      return { ...state, tagInputOpen: true };
+
+    case 'CLOSE_TAG_INPUT':
+      return { ...state, tagInputOpen: false };
+
     case 'TOGGLE_ENABLED':
       return { ...state, enabled: !state.enabled };
 

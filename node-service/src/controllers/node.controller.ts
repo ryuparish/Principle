@@ -39,7 +39,7 @@ export class NodeController {
 
   async create(req: Request, res: Response) {
     try {
-      const { conceptMapId, title, content, position, style } = req.body;
+      const { conceptMapId, title, content, position, style, shape } = req.body;
 
       // Validation
       if (!conceptMapId) {
@@ -57,7 +57,8 @@ export class NodeController {
         title,
         content,
         position,
-        style
+        style,
+        shape
       });
 
       // TypeORM transformers already convert JSON strings to objects
@@ -71,7 +72,7 @@ export class NodeController {
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { title, content, position, style, imageIds, tags } = req.body;
+      const { title, content, position, style, imageIds, tags, shape } = req.body;
 
       const node = await nodeService.updateNode(id, {
         title,
@@ -79,7 +80,8 @@ export class NodeController {
         position,
         style,
         imageIds,
-        tags
+        tags,
+        shape
       });
 
       // TypeORM transformers already convert JSON strings to objects

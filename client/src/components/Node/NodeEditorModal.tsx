@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { ConceptMapNode, Media } from '../../types';
+import { NodeShape } from '../../types/shapes';
 import { useConceptMapStore } from "../../store/conceptMapStore";
 import TipTapEditor from '../Editor/TipTapEditor';
 import { ImageUploader } from '../ImageUploader/ImageUploader';
 import { ImageGallery } from '../ImageGallery/ImageGallery';
 import { ImageLightbox } from '../ImageLightbox/ImageLightbox';
+import { TagInput } from '../Tags/TagInput';
+import { ShapePicker } from './ShapePicker';
 import './NodeEditorModal.css';
 
 interface NodeEditorModalProps {
@@ -42,6 +45,8 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
       ? node.content
       : getDefaultContent()
   );
+  const [tags, setTags] = useState<string[]>(node.tags || []);
+  const [shape, setShape] = useState<NodeShape>((node.shape as NodeShape) || 'rounded-rectangle');
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -50,6 +55,8 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
   // Refs to track latest values without causing re-renders
   const titleRef = useRef(title);
   const contentRef = useRef(content);
+  const tagsRef = useRef(tags);
+  const shapeRef = useRef(shape);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const saveMessageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isSavingRef = useRef(false);
@@ -65,6 +72,14 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
   }, [content]);
 
   useEffect(() => {
+    tagsRef.current = tags;
+  }, [tags]);
+
+  useEffect(() => {
+    shapeRef.current = shape;
+  }, [shape]);
+
+  useEffect(() => {
     updateNodeRef.current = updateNode;
   }, [updateNode]);
 
@@ -76,6 +91,8 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
         ? node.content
         : getDefaultContent()
     );
+    setTags(node.tags || []);
+    setShape((node.shape as NodeShape) || 'rounded-rectangle');
   }, [node]);
 
   // Load media when modal opens
@@ -96,7 +113,8 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
       // Read from refs to get latest values
       await updateNodeRef.current(node.id, {
         title: titleRef.current,
-        content: contentRef.current
+        content: contentRef.current,
+        shape: shapeRef.current
       });
 
       if (showMessage) {
@@ -226,7 +244,7 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
         saveTimeoutRef.current = null;
       }
     };
-  }, [title, content, performSave]);
+  }, [title, content, shape, performSave]);
 
   if (!isOpen) return null;
 
@@ -260,8 +278,26 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
               placeholder="Write your notes here..."
             />
 
-            <div className="images-section">
-              <div className="images-row">
+            <div className="metadata-row">
+              <div className="tags-section">
+                <label className="tags-label">Tags:</label>
+                <TagInput
+                  nodeId={node.id}
+                  currentTags={tags}
+                  onTagsChange={setTags}
+                  placeholder="Add tags..."
+                />
+              </div>
+
+              <div className="shape-section">
+                <label className="shape-label">Shape:</label>
+                <ShapePicker
+                  currentShape={shape}
+                  onShapeSelect={setShape}
+                />
+              </div>
+
+              <div className="images-section">
                 <span className="images-label">Images:</span>
                 <ImageUploader
                   nodeId={node.id}

@@ -1,0 +1,155 @@
+/* CSS-based simple shapes */
+.shape-rectangle {
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shape-rectangle .node-content {
+  justify-content: center;
+}
+
+.shape-rectangle .node-main {
+  align-items: center;
+}
+
+.shape-rounded-rectangle {
+  border-radius: 8px;  /* Current default */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shape-rounded-rectangle .node-content {
+  justify-content: center;
+}
+
+.shape-rounded-rectangle .node-main {
+  align-items: center;
+}
+
+.shape-circle {
+  border-radius: 50%;
+  aspect-ratio: 1 / 1;  /* Force square for perfect circle */
+  min-width: 100px;
+  min-height: 100px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Override base styles for SVG-based shapes */
+.shape-svg {
+  border: none;           /* Remove CSS border - SVG provides the shape */
+  border-radius: 0;       /* Remove rounding - SVG provides the shape */
+  background: transparent; /* Remove background - SVG fills the space */
+  padding: 0;             /* Remove padding - handled by svg-shape-content */
+}
+
+/* SVG shape container */
+.svg-shape-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.svg-shape-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.svg-shape-content {
+  position: relative;
+  z-index: 1;
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Shape-specific content positioning */
+
+/* Standard center for most shapes */
+.cylinder-content,
+.hexagon-content,
+.diamond-content,
+.parallelogram-content,
+.document-content,
+.storage-content {
+  justify-content: center;
+  align-items: center;
+}
+
+.cylinder-content .node-content,
+.hexagon-content .node-content,
+.diamond-content .node-content,
+.parallelogram-content .node-content,
+.document-content .node-content,
+.storage-content .node-content {
+  justify-content: center;
+}
+
+.cylinder-content .node-main,
+.hexagon-content .node-main,
+.diamond-content .node-main,
+.parallelogram-content .node-main,
+.document-content .node-main,
+.storage-content .node-main {
+  align-items: center;
+}
+
+/* Cloud - shift down to center in bulge */
+.cloud-content {
+  justify-content: center;
+  align-items: center;
+  padding-top: 8px;
+}
+
+.cloud-content .node-content {
+  justify-content: center;
+}
+
+.cloud-content .node-main {
+  align-items: center;
+}
+
+/* Actor - align with body, not head */
+.actor-content {
+  justify-content: flex-start;
+  align-items: center;
+  padding-top: 50px;
+}
+
+.actor-content .node-content {
+  justify-content: center;
+}
+
+.actor-content .node-main {
+  align-items: center;
+}
+
+/* Queue - compensate for stacked offset */
+.queue-content {
+  justify-content: center;
+  align-items: center;
+  padding-left: 30px;
+}
+
+.queue-content .node-content {
+  justify-content: center;
+}
+
+.queue-content .node-main {
+  align-items: center;
+}
+

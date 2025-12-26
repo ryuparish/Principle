@@ -69,6 +69,9 @@ export class Node {
   })
   tags!: string[];
 
+  @Column('text', { default: 'rounded-rectangle' })
+  shape!: string;
+
   @Column('boolean', { default: false })
   isDeleted!: boolean;
 

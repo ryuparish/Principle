@@ -142,7 +142,10 @@ To create the most intuitive and flexible personal knowledge management system t
 - **FR-7.1:** User can change node background color
 - **FR-7.2:** User can choose from preset color palette
 - **FR-7.3:** User can set custom border style
-- **FR-7.4:** System provides default styling that looks clean
+- **FR-7.4:** User can change node shape (rectangle, rounded-rectangle, circle, cylinder, hexagon, diamond, parallelogram, cloud, actor, document, queue, storage)
+- **FR-7.5:** Shape picker shows visual previews grouped by category (basic, compute, data, flow, external)
+- **FR-7.6:** Connection handles position automatically based on selected shape
+- **FR-7.7:** System provides default styling that looks clean
 
 #### FR-8: Search and Navigation
 - **FR-8.1:** User can search nodes by title

@@ -1,9 +1,12 @@
 import { useEffect, useCallback } from 'react';
+import { useReactFlow } from 'reactflow';
 import { VimKeyEvent, GraphObject } from '../types/vim.types';
 import { useVimMode } from './useVimMode';
 import { useGraphNavigation } from './useGraphNavigation';
 import { useVimOperations } from './useVimOperations';
+import { useVimCommands } from './useVimCommands';
 import { useConceptMapStore } from '../store/conceptMapStore';
+import { useToastStore } from '../store/toastStore';
 
 /**
  * Keyboard handler hook
@@ -13,6 +16,9 @@ export const useKeyboardHandler = () => {
   const vim = useVimMode();
   const navigation = useGraphNavigation();
   const operations = useVimOperations();
+  const { executeCommand } = useVimCommands();
+  const { addToast } = useToastStore();
+  const { getNode } = useReactFlow();
 
   // Check if event target is an editable element
   const isEditableElement = useCallback((target: EventTarget | null): boolean => {
@@ -24,7 +30,8 @@ export const useKeyboardHandler = () => {
       element.isContentEditable ||
       element.closest('.tiptap') !== null || // TipTap editor
       element.closest('.node-title-input') !== null || // Node title input
-      element.closest('.modal-content') !== null // Modal open
+      element.closest('.modal-content') !== null || // Modal open
+      element.closest('.tag-input-container') !== null // Tag input
     );
   }, []);
 
@@ -89,8 +96,31 @@ export const useKeyboardHandler = () => {
 
       if (vimKey.key === 'Enter') {
         e.preventDefault();
-        // Command execution will be handled in Phase 7
-        // For now, just exit command mode
+        const commandInput = vim.state.commandInput;
+
+        // Execute the command
+        if (commandInput.trim()) {
+          executeCommand(commandInput).then((result) => {
+            if (result.success) {
+              if (result.message) {
+                addToast({
+                  type: 'success',
+                  message: result.message,
+                  duration: 2000
+                });
+              }
+            } else if (result.error) {
+              addToast({
+                type: 'error',
+                message: result.error,
+                duration: 3000
+              });
+            }
+          });
+        }
+
+        // Exit command mode and clear input
+        vim.setCommandInput('');
         vim.enterNormalMode();
         return;
       }
@@ -120,7 +150,7 @@ export const useKeyboardHandler = () => {
     // Prevent default for most vim keys
     const shouldPreventDefault =
       vim.state.mode !== 'normal' || // Always prevent in non-normal modes
-      'hjklwebfnpxyducvioasgtm:?.'.includes(vimKey.key.toLowerCase()) ||
+      'hjklwebfnpxyducvioasgtm:?.t'.includes(vimKey.key.toLowerCase()) ||
       vimKey.key === 'Tab' ||
       vimKey.key === 'Escape' ||
       vimKey.key === 'Enter' ||
@@ -154,7 +184,7 @@ export const useKeyboardHandler = () => {
       }
 
       // : - enter command mode
-      if (vimKey.key === ':' && vim.state.shift) {
+      if (vimKey.key === ':') {
         vim.enterCommandMode();
         return;
       }
@@ -240,7 +270,7 @@ export const useKeyboardHandler = () => {
 
         if (sourceId && targetId && sourceId !== targetId) {
           // Create edge using operations hook
-          operations.createEdgeOperation(sourceId, targetId);
+          operations.createEdgeOperation(sourceId, targetId, getNode);
         }
         vim.exitEdgeMode();
         return;
@@ -558,6 +588,15 @@ export const useKeyboardHandler = () => {
         }
         return;
       }
+
+      // tt - tag focused node
+      if (vim.state.commandBuffer === 't' && vimKey.key === 't') {
+        if (vim.state.focusedNodeId) {
+          vim.openTagInput();
+        }
+        vim.clearCommandBuffer();
+        return;
+      }
     }
 
     // OPERATIONS (Visual mode - operate on selection)
@@ -584,6 +623,15 @@ export const useKeyboardHandler = () => {
         await operations.deleteSelection();
         vim.enterNormalMode();
         vim.clearSelection();
+        return;
+      }
+
+      // tt - tag all selected nodes
+      if (vim.state.commandBuffer === 't' && vimKey.key === 't') {
+        if (vim.state.selectedNodeIds.size > 0) {
+          vim.openTagInput();
+        }
+        vim.clearCommandBuffer();
         return;
       }
     }
@@ -693,9 +741,20 @@ export const useKeyboardHandler = () => {
         }, 1000);
         return;
       }
+
+      if (vimKey.key === 't' && vim.state.commandBuffer === '') {
+        vim.appendCommandBuffer('t');
+        // Clear buffer after timeout if no second key
+        setTimeout(() => {
+          if (vim.state.commandBuffer === 't') {
+            vim.clearCommandBuffer();
+          }
+        }, 1000);
+        return;
+      }
     }
 
-  }, [vim, navigation, operations, isEditableElement, createVimKeyEvent]);
+  }, [vim, navigation, operations, executeCommand, addToast, isEditableElement, createVimKeyEvent]);
 
   // Attach keyboard event listener
   useEffect(() => {

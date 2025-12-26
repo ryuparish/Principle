@@ -27,6 +27,12 @@ export class Edge {
   targetNodeId!: string;
 
   @Column('text', { nullable: true })
+  sourceHandleId?: string;
+
+  @Column('text', { nullable: true })
+  targetHandleId?: string;
+
+  @Column('text', { nullable: true })
   label?: string;
 
   @Column('text', {

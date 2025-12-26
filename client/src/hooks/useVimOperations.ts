@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useReactFlow } from 'reactflow';
+import { useReactFlow, Node } from 'reactflow';
 import { useConceptMapStore } from "../store/conceptMapStore";
 import { useVimMode } from './useVimMode';
 import { GraphObject } from '../types/vim.types';
@@ -10,6 +10,7 @@ import {
   executeYank,
   executePaste
 } from '../services/operatorEngine';
+import { getClosestHandles } from '../utils/handleGeometry';
 
 /**
  * Vim operations hook
@@ -26,7 +27,8 @@ export const useVimOperations = () => {
     deleteEdgeWithoutHistory,
     createNode,
     createEdge,
-    updateNodeLocal
+    updateNodeLocal,
+    saveHistory
   } = useConceptMapStore();
 
   // Delete operation
@@ -43,8 +45,8 @@ export const useVimOperations = () => {
       return;
     }
 
-    // Execute delete
-    await executeDelete(nodes, edges, deleteNodes, deleteEdgeWithoutHistory);
+    // Execute delete (passes saveHistory to ensure it's called BEFORE any deletions)
+    await executeDelete(nodes, edges, deleteNodes, deleteEdgeWithoutHistory, saveHistory);
 
     // Clear focus if focused node was deleted
     if (vim.state.focusedNodeId && nodes.some(n => n.id === vim.state.focusedNodeId)) {
@@ -53,7 +55,7 @@ export const useVimOperations = () => {
 
     // Clear selection
     vim.clearSelection();
-  }, [vim, storeNodes, storeEdges, deleteNodes, deleteEdgeWithoutHistory]);
+  }, [vim, storeNodes, storeEdges, deleteNodes, deleteEdgeWithoutHistory, saveHistory]);
 
   // Yank operation
   const yankOperation = useCallback((object: GraphObject) => {
@@ -129,10 +131,36 @@ export const useVimOperations = () => {
   }, [deleteOperation, vim]);
 
   // Create edge (for edge mode)
-  const createEdgeOperation = useCallback(async (sourceId: string, targetId: string) => {
+  const createEdgeOperation = useCallback(async (
+    sourceId: string,
+    targetId: string,
+    getNode: (id: string) => Node | undefined
+  ) => {
     try {
-      await createEdge(sourceId, targetId);
-      console.log('[EDGE] Created edge from', sourceId, 'to', targetId);
+      // Get nodes
+      const sourceNode = getNode(sourceId);
+      const targetNode = getNode(targetId);
+
+      if (!sourceNode || !targetNode) {
+        console.error('[EDGE] Could not find nodes');
+        return;
+      }
+
+      // Calculate closest handles
+      const handles = getClosestHandles(sourceNode, targetNode, getNode);
+
+      console.log('[EDGE] Handles calculated:', handles);
+      console.log('[EDGE] Passing to createEdge:', sourceId, targetId, handles?.sourceHandle, handles?.targetHandle);
+
+      // Create edge with calculated handles
+      await createEdge(
+        sourceId,
+        targetId,
+        handles?.sourceHandle,
+        handles?.targetHandle
+      );
+
+      console.log('[EDGE] Edge created successfully');
     } catch (error) {
       console.error('[EDGE] Failed to create edge:', error);
     }

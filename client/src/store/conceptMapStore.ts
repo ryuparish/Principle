@@ -38,12 +38,13 @@ interface ConceptMapStore {
   updateNode: (id: string, data: Partial<ConceptMapNode>) => Promise<void>;
   updateNodeLocal: (id: string, data: Partial<ConceptMapNode>) => void;
   deleteNode: (id: string) => Promise<void>;
-  deleteNodes: (ids: string[]) => Promise<void>;
+  deleteNodes: (ids: string[], skipHistory?: boolean) => Promise<void>;
 
   loadEdges: (conceptMapId: string) => Promise<void>;
-  createEdge: (sourceNodeId: string, targetNodeId: string, label?: string) => Promise<ConceptMapEdge>;
+  createEdge: (sourceNodeId: string, targetNodeId: string, sourceHandleId?: string, targetHandleId?: string, label?: string) => Promise<ConceptMapEdge>;
   updateEdge: (id: string, data: UpdateEdgeInput) => Promise<void>;
   deleteEdge: (id: string) => Promise<void>;
+  deleteEdgeWithoutHistory: (id: string) => Promise<void>;
 
   uploadMedia: (file: File, nodeId: string) => Promise<Media>;
   loadNodeMedia: (nodeId: string) => Promise<void>;
@@ -209,11 +210,13 @@ export const useConceptMapStore = create<ConceptMapStore>((set, get) => ({
     }
   },
 
-  deleteNodes: async (ids: string[]) => {
+  deleteNodes: async (ids: string[], skipHistory: boolean = false) => {
     const { saveHistory } = get();
     try {
-      // Save history before deleting
-      saveHistory();
+      // Save history before deleting (unless caller already did)
+      if (!skipHistory) {
+        saveHistory();
+      }
 
       // Delete all nodes in parallel
       await Promise.all(ids.map(id => nodeApi.delete(id)));
@@ -234,7 +237,21 @@ export const useConceptMapStore = create<ConceptMapStore>((set, get) => ({
     }
   },
 
-  createEdge: async (sourceNodeId: string, targetNodeId: string, label?: string) => {
+  createEdge: async (
+    sourceNodeId: string,
+    targetNodeId: string,
+    sourceHandleId?: string,
+    targetHandleId?: string,
+    label?: string
+  ) => {
+    console.log('[STORE] createEdge called with:', {
+      sourceNodeId,
+      targetNodeId,
+      sourceHandleId,
+      targetHandleId,
+      label
+    });
+
     const { currentConceptMap, saveHistory } = get();
     if (!currentConceptMap) {
       throw new Error('No concept map selected');
@@ -244,13 +261,22 @@ export const useConceptMapStore = create<ConceptMapStore>((set, get) => ({
       // Save history before creating edge
       saveHistory();
 
-      const edge = await edgeApi.create({
+      const edgeData = {
         conceptMapId: currentConceptMap.id,
         sourceNodeId,
         targetNodeId,
+        sourceHandleId,
+        targetHandleId,
         label,
         style: {}
-      });
+      };
+
+      console.log('[STORE] Calling edgeApi.create with:', edgeData);
+
+      const edge = await edgeApi.create(edgeData);
+
+      console.log('[STORE] Edge created, received from API:', edge);
+
       set((state) => ({
         edges: [...state.edges, edge]
       }));
@@ -419,6 +445,10 @@ export const useConceptMapStore = create<ConceptMapStore>((set, get) => ({
 
     console.log('[UNDO] Restoring snapshot from', new Date(targetSnapshot.timestamp));
 
+    // CRITICAL: Capture current state BEFORE modifying it
+    const currentNodes = state.nodes;
+    const currentEdges = state.edges;
+
     // Update state first for immediate UI feedback
     set({
       nodes: JSON.parse(JSON.stringify(targetSnapshot.nodes)),
@@ -426,11 +456,11 @@ export const useConceptMapStore = create<ConceptMapStore>((set, get) => ({
       historyIndex: state.historyIndex - 1
     });
 
-    // Sync with backend
+    // Sync with backend - use captured state (BEFORE modification)
     // 1. Find nodes to delete (in current state but not in snapshot)
-    const currentNodeIds = new Set(state.nodes.map(n => n.id));
+    const currentNodeIds = new Set(currentNodes.map(n => n.id));
     const snapshotNodeIds = new Set(targetSnapshot.nodes.map(n => n.id));
-    const nodesToDelete = state.nodes.filter(n => !snapshotNodeIds.has(n.id));
+    const nodesToDelete = currentNodes.filter(n => !snapshotNodeIds.has(n.id));
 
     // 2. Find nodes to create (in snapshot but not in current state)
     const nodesToCreate = targetSnapshot.nodes.filter(n => !currentNodeIds.has(n.id));
@@ -439,9 +469,9 @@ export const useConceptMapStore = create<ConceptMapStore>((set, get) => ({
     const nodesToUpdate = targetSnapshot.nodes.filter(n => currentNodeIds.has(n.id));
 
     // 4. Find edges to delete (in current state but not in snapshot)
-    const currentEdgeIds = new Set(state.edges.map(e => e.id));
+    const currentEdgeIds = new Set(currentEdges.map(e => e.id));
     const snapshotEdgeIds = new Set(targetSnapshot.edges.map(e => e.id));
-    const edgesToDelete = state.edges.filter(e => !snapshotEdgeIds.has(e.id));
+    const edgesToDelete = currentEdges.filter(e => !snapshotEdgeIds.has(e.id));
 
     // 5. Find edges to create (in snapshot but not in current state)
     const edgesToCreate = targetSnapshot.edges.filter(e => !currentEdgeIds.has(e.id));
@@ -544,6 +574,10 @@ export const useConceptMapStore = create<ConceptMapStore>((set, get) => ({
 
     console.log('[REDO] Restoring snapshot from', new Date(nextSnapshot.timestamp));
 
+    // CRITICAL: Capture current state BEFORE modifying it
+    const currentNodes = state.nodes;
+    const currentEdges = state.edges;
+
     // Update state first for immediate UI feedback
     set({
       nodes: JSON.parse(JSON.stringify(nextSnapshot.nodes)),
@@ -551,11 +585,11 @@ export const useConceptMapStore = create<ConceptMapStore>((set, get) => ({
       historyIndex: state.historyIndex + 1
     });
 
-    // Sync with backend
+    // Sync with backend - use captured state (BEFORE modification)
     // 1. Find nodes to delete (in current state but not in snapshot)
-    const currentNodeIds = new Set(state.nodes.map(n => n.id));
+    const currentNodeIds = new Set(currentNodes.map(n => n.id));
     const snapshotNodeIds = new Set(nextSnapshot.nodes.map(n => n.id));
-    const nodesToDelete = state.nodes.filter(n => !snapshotNodeIds.has(n.id));
+    const nodesToDelete = currentNodes.filter(n => !snapshotNodeIds.has(n.id));
 
     // 2. Find nodes to create (in snapshot but not in current state)
     const nodesToCreate = nextSnapshot.nodes.filter(n => !currentNodeIds.has(n.id));
@@ -564,9 +598,9 @@ export const useConceptMapStore = create<ConceptMapStore>((set, get) => ({
     const nodesToUpdate = nextSnapshot.nodes.filter(n => currentNodeIds.has(n.id));
 
     // 4. Find edges to delete (in current state but not in snapshot)
-    const currentEdgeIds = new Set(state.edges.map(e => e.id));
+    const currentEdgeIds = new Set(currentEdges.map(e => e.id));
     const snapshotEdgeIds = new Set(nextSnapshot.edges.map(e => e.id));
-    const edgesToDelete = state.edges.filter(e => !snapshotEdgeIds.has(e.id));
+    const edgesToDelete = currentEdges.filter(e => !snapshotEdgeIds.has(e.id));
 
     // 5. Find edges to create (in snapshot but not in current state)
     const edgesToCreate = nextSnapshot.edges.filter(e => !currentEdgeIds.has(e.id));
