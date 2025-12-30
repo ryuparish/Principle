@@ -4,9 +4,10 @@ import { nodeService } from '../services/node.service';
 export class NodeController {
   async getByConceptMap(req: Request, res: Response) {
     try {
-      const { conceptMapId } = req.query;
+      // Accept both mindmapId (legacy client) and conceptMapId (new naming)
+      const conceptMapId = (req.query.conceptMapId || req.query.mindmapId) as string;
 
-      if (!conceptMapId || typeof conceptMapId !== 'string') {
+      if (!conceptMapId) {
         return res.status(400).json({ error: 'conceptMapId query parameter is required' });
       }
 
@@ -125,9 +126,11 @@ export class NodeController {
 
   async search(req: Request, res: Response) {
     try {
-      const { conceptMapId, q } = req.query;
+      // Accept both mindmapId (legacy client) and conceptMapId (new naming)
+      const conceptMapId = (req.query.conceptMapId || req.query.mindmapId) as string;
+      const { q } = req.query;
 
-      if (!conceptMapId || typeof conceptMapId !== 'string') {
+      if (!conceptMapId) {
         return res.status(400).json({ error: 'conceptMapId query parameter is required' });
       }
       if (!q || typeof q !== 'string') {
