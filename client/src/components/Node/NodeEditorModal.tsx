@@ -182,10 +182,23 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
       await uploadMedia(file, node.id);
       setSaveMessage('Image uploaded');
       setTimeout(() => setSaveMessage(null), 2000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to upload image:', error);
-      setSaveMessage('Error uploading image');
-      setTimeout(() => setSaveMessage(null), 3000);
+
+      // Extract meaningful error message
+      const errorData = error.response?.data;
+      let errorMessage = 'Error uploading image';
+
+      if (errorData?.code === 'SERVICE_UNAVAILABLE') {
+        errorMessage = 'Media service offline - please restart services';
+      } else if (errorData?.error) {
+        errorMessage = errorData.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      setSaveMessage(errorMessage);
+      setTimeout(() => setSaveMessage(null), 5000);
     }
   };
 

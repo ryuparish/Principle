@@ -4,10 +4,21 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { AppDataSource } from './data-source';
 import mediaRoutes from './routes/media.routes';
 
 dotenv.config();
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  console.log('📁 Creating uploads directory...');
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('✅ Uploads directory created');
+} else {
+  console.log('✅ Uploads directory exists');
+}
 
 const app = express();
 const PORT = process.env.PORT || 3003;

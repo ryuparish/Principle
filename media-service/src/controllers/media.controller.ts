@@ -21,8 +21,31 @@ export class MediaController {
 
       res.status(201).json(media);
     } catch (error: any) {
-      console.error('Error uploading file:', error);
-      res.status(500).json({ error: error.message || 'Failed to upload file' });
+      console.error('Error uploading file:', {
+        message: error.message,
+        code: error.code,
+        filename: req.file?.filename,
+        originalname: req.file?.originalname,
+        nodeId: req.body.nodeId
+      });
+
+      // Provide specific error messages
+      let errorMessage = 'Failed to upload file';
+      let statusCode = 500;
+
+      if (error.code === 'ENOENT') {
+        errorMessage = 'Upload directory does not exist';
+      } else if (error.message.includes('Sharp')) {
+        errorMessage = 'Failed to process image - file may be corrupted';
+        statusCode = 400;
+      } else if (error.message.includes('database')) {
+        errorMessage = 'Database error while saving media';
+      }
+
+      res.status(statusCode).json({
+        error: errorMessage,
+        details: error.message
+      });
     }
   }
 

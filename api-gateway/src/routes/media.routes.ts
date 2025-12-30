@@ -35,9 +35,24 @@ router.post('/upload', upload.single('image'), async (req: Request, res: Respons
 
     res.status(201).json(response.data);
   } catch (error: any) {
-    console.error('Error uploading media:', error.message);
+    console.error('Error uploading media:', {
+      message: error.message,
+      code: error.code,
+      response: error.response?.data
+    });
+
+    // Detect if media-service is down
+    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+      return res.status(503).json({
+        error: 'Media service is unavailable',
+        details: 'The media-service is not running on port 3003. Please start it with: npm run dev:media',
+        code: 'SERVICE_UNAVAILABLE'
+      });
+    }
+
     res.status(error.response?.status || 500).json({
-      error: error.response?.data?.error || 'Failed to upload media'
+      error: error.response?.data?.error || 'Failed to upload media',
+      details: error.message
     });
   }
 });
