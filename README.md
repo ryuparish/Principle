@@ -54,12 +54,15 @@ git checkout docker-free
 ### 3. Install Dependencies
 
 ```bash
+# ⚠️ IMPORTANT: Run this from the ROOT Principle directory
 npm run install:all
 ```
 
 This installs dependencies for all services (API Gateway, Node Service, Edge Service, Media Service, AI Service, Queue Service) and the client application, then automatically creates `.env` files from the `.env.example` templates.
 
 **Installation takes:** ~2-3 minutes
+
+**Why from root?** Principle uses npm workspaces to share dependencies efficiently. Running `npm install` in individual service folders will cause "Cannot find module" errors.
 
 **Note:** If you need to recreate `.env` files later, run: `npm run setup`
 
@@ -193,14 +196,27 @@ This kills all processes on Principle's ports.
 
 ---
 
-### Problem: "Module not found" errors
+### Problem: "Module not found" errors (e.g., "Cannot find module 'better-queue'" or "@prisma/client")
+
+**Cause:** This happens when:
+- Dependencies weren't installed from the root directory
+- You ran `npm install` in individual service folders instead of the root
+- Fresh clone without running the full installation
 
 **Solution:**
 ```bash
+# IMPORTANT: Always run from the root Principle directory
+cd /path/to/Principle
 npm run install:all
 ```
 
-Reinstalls all dependencies across services.
+**Why this works:** Principle uses npm workspaces, which hoists shared dependencies to the root `node_modules`. Individual service `npm install` commands won't install all required packages.
+
+**Quick fix if you're already in a service directory:**
+```bash
+cd ..  # Go back to root
+npm install  # Install workspace dependencies
+```
 
 ---
 
