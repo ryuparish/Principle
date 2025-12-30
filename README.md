@@ -68,12 +68,20 @@ This installs dependencies for all services (API Gateway, Node Service, Edge Ser
 
 ### 4. Database Setup
 
-No manual migration needed! TypeORM automatically creates the SQLite databases and schema on first startup.
+**No manual steps required!** The databases and tables are created automatically on first startup.
 
-The databases will be created at:
+**How it works:**
+- On first run, the system detects no database files exist
+- TypeORM automatically creates the SQLite files and schema
+- You'll see: `📝 Fresh database at ./dev.db - will create schema on connect`
+- Tables are created and ready to use immediately
+
+**Database locations:**
 - `node-service/dev.db` - Stores concept maps, nodes, and edges
 - `edge-service/dev.db` - Stores connections between nodes
 - `media-service/dev.db` - Stores media metadata
+
+**Note:** Existing databases are protected - schema sync is automatically disabled to prevent accidental modifications.
 
 ### 5. Start the Application
 
