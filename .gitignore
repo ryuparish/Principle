@@ -148,3 +148,4 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 *.bak
 *.backup
 *~.nib
+*.db.backup-*
