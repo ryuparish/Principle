@@ -97,7 +97,7 @@ export class NodeService {
       { id },
       {
         isDeleted: false,
-        deletedAt: null
+        deletedAt: undefined
       }
     );
 

@@ -165,3 +165,50 @@ export interface TagStats {
   mostUsedTags: Array<{ name: string; count: number }>;
   unusedTags: string[];
 }
+
+// ============================================================================
+// SHARING TYPES
+// ============================================================================
+
+/**
+ * Visibility options for concept maps
+ */
+export type MapVisibility = 'private' | 'public' | 'unlisted';
+
+/**
+ * Share settings for a concept map
+ */
+export interface ShareSettings {
+  visibility: MapVisibility;
+  shareSlug?: string;
+  shareToken?: string;
+  shareUrl?: string;
+  sharedAt?: string;
+}
+
+/**
+ * Input for enabling sharing on a concept map
+ */
+export interface EnableSharingInput {
+  visibility: 'public' | 'unlisted';
+  regenerateSlug?: boolean;
+}
+
+/**
+ * Complete concept map export data
+ */
+export interface ConceptMapExport {
+  version: string;
+  exportedAt: string;
+  map: {
+    id: string;
+    name: string;
+    description?: string;
+    viewport: Viewport;
+    createdAt: string;
+    updatedAt: string;
+  };
+  nodes: ConceptMapNode[];
+  edges: ConceptMapEdge[];
+  media: Media[];
+}

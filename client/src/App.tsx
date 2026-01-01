@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import ConceptMapSelector from './components/ConceptMap/ConceptMapSelector';
 import ConceptMapCanvas from './components/Canvas/ConceptMapCanvas';
 import ToastContainer from './components/Toast/ToastContainer';
+import PublicViewer from './pages/PublicViewer';
 import { queueApi } from './api/queue.api';
 
-function App() {
+function HomePage() {
   const [selectedConceptMapId, setSelectedConceptMapId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const navigate = useNavigate();
 
   const handleBackToConceptMaps = async () => {
     setIsSaving(true);
@@ -43,6 +46,15 @@ function App() {
         <ConceptMapCanvas conceptMapId={selectedConceptMapId} />
       </div>
     </>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/share/:shareSlug" element={<PublicViewer />} />
+    </Routes>
   );
 }
 

@@ -8,6 +8,7 @@ import { useVim } from '../../contexts/VimContext';
 import { useConceptMapStore } from "../../store/conceptMapStore";
 import { TagChip } from '../Tags/TagChip';
 import { useTagStore } from '../../store/tagStore';
+import { mediaApi } from '../../api/media.api';
 import './CustomNode.css';
 import './NodeShapes.css';
 
@@ -24,6 +25,10 @@ const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, isConnectable, 
   const vim = useVim();
   const { updateNode } = useConceptMapStore();
   const { toggleTagFilter } = useTagStore();
+
+  // Load media for this node if it has images
+  const nodeMedia = useConceptMapStore((state) => state.media[id] || []);
+  const { loadNodeMedia } = useConceptMapStore();
 
   // Check if this node is focused and in insert mode
   const isFocused = vim.state.focusedNodeId === id;
@@ -59,6 +64,13 @@ const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, isConnectable, 
     }
     prevInsertModeRef.current = isInInsertMode;
   }, [isInInsertMode, titleValue, data.label, id, updateNode]);
+
+  // Load media when node has imageIds
+  useEffect(() => {
+    if (data.node.imageIds && data.node.imageIds.length > 0 && nodeMedia.length === 0) {
+      loadNodeMedia(id);
+    }
+  }, [data.node.imageIds, id, nodeMedia.length, loadNodeMedia]);
 
   const handleNodeClick = (e: React.MouseEvent) => {
     // Prevent opening editor when dragging
@@ -241,6 +253,25 @@ const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, isConnectable, 
             <div className="node-has-content-indicator">📝</div>
           )}
         </div>
+
+        {/* Image thumbnails - absolutely positioned in top-right */}
+        {nodeMedia.length > 0 && (
+          <div className="node-image-thumbnails-badge">
+            {nodeMedia.slice(0, 3).map((media) => (
+              <img
+                key={media.id}
+                src={mediaApi.getThumbnailUrl(media)}
+                alt=""
+                className="node-thumbnail"
+              />
+            ))}
+            {nodeMedia.length > 3 && (
+              <div className="node-thumbnail-overflow">
+                +{nodeMedia.length - 3}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <NodeEditorModal

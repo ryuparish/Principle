@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:viewer": "cd viewer && vite build",
+    "build:viewer-template": "npm run build:viewer && node scripts/generate-viewer-template.js",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
@@ -26,6 +28,7 @@
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.3.8",
     "react-modal": "^3.16.3",
+    "react-router-dom": "^7.11.0",
     "reactflow": "^11.11.4",
     "zustand": "^4.5.7"
   },
@@ -43,6 +46,7 @@
     "jsdom": "^27.2.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
+    "terser": "^5.44.1",
     "typescript": "^5.3.3",
     "vite": "^5.0.8",
     "vitest": "^4.0.15"

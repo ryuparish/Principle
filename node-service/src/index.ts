@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { AppDataSource } from './data-source';
 import mindmapRoutes from './routes/mindmap.routes';
 import nodeRoutes from './routes/node.routes';
+import shareRoutes from './routes/share.routes';
 
 dotenv.config();
 
@@ -33,7 +34,8 @@ app.get('/', (req: Request, res: Response) => {
     orm: 'TypeORM',
     endpoints: {
       mindmaps: '/mindmaps',
-      nodes: '/nodes'
+      nodes: '/nodes',
+      share: '/share'
     }
   });
 });
@@ -41,6 +43,7 @@ app.get('/', (req: Request, res: Response) => {
 // API Routes
 app.use('/mindmaps', mindmapRoutes);
 app.use('/nodes', nodeRoutes);
+app.use('/share', shareRoutes);
 
 // Initialize TypeORM and start server
 AppDataSource.initialize()

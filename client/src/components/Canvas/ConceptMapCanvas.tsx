@@ -32,6 +32,8 @@ import SearchBar from '../Search/SearchBar';
 import { TagSidebar } from '../Tags/TagSidebar';
 import { ThemePicker } from '../Theme/ThemePicker';
 import { InlineTagInput } from '../Tags/InlineTagInput';
+import { ShareButton } from '../Share/ShareButton';
+import { ShareModal } from '../Share/ShareModal';
 
 const nodeTypes = {
   custom: CustomNode,
@@ -70,6 +72,7 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
   const creatingInitialNodeRef = React.useRef<boolean>(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [tagSidebarOpen, setTagSidebarOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   // Initialize vim mode
   const { vim } = useKeyboardHandler();
@@ -525,6 +528,7 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
         >
           🏷️
         </button>
+        <ShareButton onClick={() => setShareModalOpen(true)} />
       </div>
 
       {/* Tag Sidebar */}
@@ -534,6 +538,14 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
           setTagSidebarOpen(false);
           clearFilters();
         }}
+      />
+
+      {/* Share Modal */}
+      <ShareModal
+        conceptMapId={conceptMapId}
+        conceptMapName={currentConceptMap?.name || 'Concept Map'}
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
       />
     </div>
   );

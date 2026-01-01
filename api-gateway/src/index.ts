@@ -8,7 +8,9 @@ import nodeRoutes from './routes/node.routes';
 import edgeRoutes from './routes/edge.routes';
 import queueRoutes from './routes/queue.routes';
 import mediaRoutes from './routes/media.routes';
+import shareRoutes from './routes/share.routes';
 import { services } from './config/services.config';
+import { shareLimiter } from './middleware/rateLimiter';
 
 dotenv.config();
 
@@ -40,7 +42,8 @@ app.get('/', (req: Request, res: Response) => {
       nodes: '/api/nodes',
       edges: '/api/edges',
       queue: '/api/queue',
-      media: '/api/media'
+      media: '/api/media',
+      share: '/api/share'
     }
   });
 });
@@ -51,6 +54,8 @@ app.use('/api/nodes', nodeRoutes);
 app.use('/api/edges', edgeRoutes);
 app.use('/api/queue', queueRoutes);
 app.use('/api/media', mediaRoutes);
+// Apply rate limiting to share endpoints (100 req/min per IP)
+app.use('/api/share', shareLimiter, shareRoutes);
 
 // Check service health on startup
 async function checkServicesHealth() {

@@ -42,6 +42,18 @@ export class ConceptMap {
   })
   viewport!: { x: number; y: number; zoom: number };
 
+  @Column('text', { default: 'private' })
+  visibility!: 'private' | 'public' | 'unlisted';
+
+  @Column('text', { name: 'share_slug', nullable: true, unique: true })
+  shareSlug?: string;
+
+  @Column('text', { name: 'share_token', nullable: true })
+  shareToken?: string;
+
+  @Column('datetime', { name: 'shared_at', nullable: true })
+  sharedAt?: Date;
+
   @CreateDateColumn({ type: 'datetime' })
   createdAt!: Date;
 

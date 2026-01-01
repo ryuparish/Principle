@@ -8,14 +8,18 @@ import './TipTapEditor.css';
 
 interface TipTapEditorProps {
   content: any;
-  onChange: (content: any) => void;
+  onChange?: (content: any) => void;  // Made optional for read-only mode
   placeholder?: string;
+  editable?: boolean;      // Controls whether editor is editable
+  hideMenuBar?: boolean;   // Controls whether to show menu bar
 }
 
 const TipTapEditor: React.FC<TipTapEditorProps> = ({
   content,
   onChange,
-  placeholder = 'Start writing...'
+  placeholder = 'Start writing...',
+  editable = true,         // Default to editable
+  hideMenuBar = false      // Default to show menu bar
 }) => {
   const editor = useEditor({
     extensions: [
@@ -36,15 +40,18 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       }),
       Underline,
       Link.configure({
-        openOnClick: false,
+        openOnClick: editable ? false : true,  // Allow clicking links in read-only mode
       }),
       Placeholder.configure({
         placeholder,
       }),
     ],
     content,
+    editable,              // Use prop to control editability
     onUpdate: ({ editor }) => {
-      onChange(editor.getJSON());
+      if (onChange && editable) {  // Only call onChange if editable and callback provided
+        onChange(editor.getJSON());
+      }
     },
     // Disable all input rules globally to prevent "* " and "1. " from being consumed
     enableInputRules: false,
@@ -210,7 +217,8 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
 
   return (
     <div className="tiptap-editor-wrapper">
-      <MenuBar />
+      {/* Only show menu bar if not hidden AND editable */}
+      {!hideMenuBar && editable && <MenuBar />}
       <EditorContent editor={editor} />
     </div>
   );

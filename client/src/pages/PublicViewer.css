@@ -1,0 +1,161 @@
+.public-viewer {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f9fafb;
+}
+
+.public-viewer-header {
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.public-viewer-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.public-viewer-title h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.public-viewer-title p {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.public-viewer-badge {
+  padding: 6px 12px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  color: #0c4a6e;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.public-viewer-canvas {
+  flex: 1;
+  position: relative;
+}
+
+.public-viewer-footer {
+  background: white;
+  border-top: 1px solid #e0e0e0;
+  padding: 12px 24px;
+  text-align: center;
+  color: #666;
+}
+
+.public-viewer-loading {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #f9fafb;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #0066cc;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.public-viewer-loading p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.public-viewer-error {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #f9fafb;
+  text-align: center;
+  padding: 20px;
+}
+
+.public-viewer-error h1 {
+  margin: 0;
+  font-size: 24px;
+  color: #1a1a1a;
+}
+
+.public-viewer-error p {
+  margin: 0;
+  color: #666;
+  font-size: 16px;
+}
+
+.public-viewer-error a {
+  margin-top: 8px;
+  padding: 10px 20px;
+  background: #0066cc;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.public-viewer-error a:hover {
+  background: #0052a3;
+}
+
+/* Read-only editor styling */
+.public-node-viewer .ProseMirror {
+  background: #f9fafb;  /* Light gray background to indicate read-only */
+  cursor: default;       /* Not editable */
+  padding: 16px;
+  border-radius: 6px;
+  min-height: 100px;
+}
+
+.public-node-viewer .ProseMirror:focus {
+  outline: none;  /* Remove focus outline since it's read-only */
+}
+
+/* Make nodes clickable in public viewer */
+.public-viewer .custom-node {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.public-viewer .custom-node:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.2);
+}

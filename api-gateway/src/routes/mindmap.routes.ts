@@ -72,4 +72,47 @@ router.delete('/:id', async (req: Request, res: Response) => {
   }
 });
 
+// Share management endpoints
+// Enable sharing
+router.post('/:id/share', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const response = await axios.post(`${services.nodeService}/mindmaps/${id}/share`, req.body);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error enabling sharing:', error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data?.error || 'Failed to enable sharing'
+    });
+  }
+});
+
+// Get share settings
+router.get('/:id/share', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const response = await axios.get(`${services.nodeService}/mindmaps/${id}/share`);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error getting share settings:', error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data?.error || 'Failed to get share settings'
+    });
+  }
+});
+
+// Disable sharing
+router.delete('/:id/share', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const response = await axios.delete(`${services.nodeService}/mindmaps/${id}/share`);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error disabling sharing:', error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data?.error || 'Failed to disable sharing'
+    });
+  }
+});
+
 export default router;
