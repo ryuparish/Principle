@@ -17,20 +17,6 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// Get mindmap by ID (with nodes)
-router.get('/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const response = await axios.get(`${services.nodeService}/mindmaps/${id}`);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error fetching mindmap:', error.message);
-    res.status(error.response?.status || 500).json({
-      error: error.response?.data?.error || 'Failed to fetch mindmap'
-    });
-  }
-});
-
 // Create mindmap
 router.post('/', async (req: Request, res: Response) => {
   try {
@@ -53,6 +39,20 @@ router.post('/import', async (req: Request, res: Response) => {
     console.error('Error importing concept map:', error.message);
     res.status(error.response?.status || 500).json({
       error: error.response?.data?.error || 'Failed to import concept map'
+    });
+  }
+});
+
+// Get mindmap by ID (with nodes)
+router.get('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const response = await axios.get(`${services.nodeService}/mindmaps/${id}`);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error fetching mindmap:', error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data?.error || 'Failed to fetch mindmap'
     });
   }
 });
