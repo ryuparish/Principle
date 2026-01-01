@@ -15,11 +15,10 @@
   ],
   "scripts": {
     "setup": "./setup-env.sh",
-    "install:all": "npm install && npm run install:services && npm run prisma:generate && npm run build:all && npm run install:client && npm run setup",
+    "install:all": "npm install && npm run install:services && npm run build:all && npm run install:client && npm run setup",
     "install:services": "cd api-gateway && npm install && cd ../node-service && npm install && cd ../edge-service && npm install && cd ../media-service && npm install && cd ../ai-service && npm install && cd ../queue-service && npm install",
     "install:client": "cd client && npm install",
     "build:all": "cd api-gateway && npm run build && cd .. && cd node-service && npm run build && cd .. && cd edge-service && npm run build && cd .. && cd media-service && npm run build && cd ..",
-    "prisma:generate": "cd edge-service && npx prisma generate && cd .. && cd media-service && npx prisma generate && cd ..",
     "kill": "./kill-services.sh",
     "dev:all": "npm run kill && concurrently \"npm run dev:gateway\" \"npm run dev:node\" \"npm run dev:edge\" \"npm run dev:media\" \"npm run dev:ai\" \"npm run dev:queue\" \"npm run dev:client\"",
     "dev:gateway": "cd api-gateway && PORT=3000 npm run dev",
