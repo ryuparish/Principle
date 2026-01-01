@@ -4,6 +4,30 @@ A local-first, microservices-based concept map application for organizing knowle
 
 > **🚀 Docker-Free Version**: This branch runs entirely with SQLite and in-memory queuing. No Docker, PostgreSQL, or Redis required!
 
+## 🆕 Fresh Clone? Start Here!
+
+If you just cloned this repository, use the **automated setup script**:
+
+```bash
+./fresh-install.sh
+```
+
+This will install all dependencies and build all services automatically. Then start the app with:
+
+```bash
+npm run dev:all
+```
+
+**Having issues?** Run the diagnostic tool:
+
+```bash
+./check-setup.sh
+```
+
+For detailed setup instructions and troubleshooting, see **[SETUP.md](./SETUP.md)**.
+
+---
+
 ## Prerequisites
 
 **Required:**
