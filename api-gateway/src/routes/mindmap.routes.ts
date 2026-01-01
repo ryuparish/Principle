@@ -115,4 +115,17 @@ router.delete('/:id/share', async (req: Request, res: Response) => {
   }
 });
 
+// Import concept map from JSON
+router.post('/import', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${services.nodeService}/mindmaps/import`, req.body);
+    res.status(201).json(response.data);
+  } catch (error: any) {
+    console.error('Error importing concept map:', error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data?.error || 'Failed to import concept map'
+    });
+  }
+});
+
 export default router;

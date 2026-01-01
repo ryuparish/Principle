@@ -1,0 +1,23 @@
+.import-button {
+  padding: 10px 16px;
+  border: 2px solid #d0d0d0;
+  background: white;
+  color: #1a1a1a;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.import-button:hover {
+  background: #f0f9ff;
+  border-color: #0066cc;
+}
+
+.import-icon {
+  font-size: 16px;
+}

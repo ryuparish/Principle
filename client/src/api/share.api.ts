@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { ShareSettings, EnableSharingInput, ConceptMapExport } from '../types';
+import { ShareSettings, EnableSharingInput, ConceptMapExport, ConceptMap } from '../types';
 
 export const shareApi = {
   /**
@@ -69,5 +69,28 @@ export const shareApi = {
       url.searchParams.set('token', token);
     }
     return url.toString();
+  },
+
+  /**
+   * Import a concept map from a JSON file
+   */
+  importConceptMap: async (file: File): Promise<ConceptMap> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = async (e) => {
+        try {
+          const json = JSON.parse(e.target?.result as string);
+
+          const response = await apiClient.post('/mindmaps/import', json);
+          resolve(response.data.map);
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsText(file);
+    });
   }
 };
