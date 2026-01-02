@@ -18,8 +18,11 @@ export class Media {
   @Column('text', { nullable: true })
   nodeId?: string;
 
-  @Column('text', { unique: true })
-  filename!: string;
+  @Column('text', { unique: true, nullable: true })
+  filename?: string;
+
+  @Column('text', { nullable: true })
+  thumbnailFilename?: string;
 
   @Column('text')
   originalName!: string;
@@ -36,11 +39,21 @@ export class Media {
   @Column('integer', { nullable: true })
   height?: number;
 
-  @Column('text')
-  url!: string;
+  @Column('text', { nullable: true })
+  url?: string;
 
   @Column('text', { nullable: true })
   thumbnailUrl?: string;
+
+  // S3 storage fields
+  @Column('text', { nullable: true })
+  s3Key?: string;
+
+  @Column('text', { nullable: true })
+  s3Url?: string;
+
+  @Column('text', { nullable: true })
+  thumbnailS3Key?: string;
 
   @CreateDateColumn({ type: 'datetime' })
   createdAt!: Date;

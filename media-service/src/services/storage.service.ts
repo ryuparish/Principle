@@ -10,7 +10,10 @@ export class StorageService {
    */
   async generateThumbnail(filename: string): Promise<string> {
     const originalPath = path.join(this.uploadsDir, filename);
-    const thumbnailFilename = filename.replace('-original', '-thumb');
+    // Extract extension and insert -thumb before it (works with any filename format)
+    const ext = path.extname(filename);
+    const nameWithoutExt = filename.slice(0, -ext.length);
+    const thumbnailFilename = `${nameWithoutExt}-thumb${ext}`;
     const thumbnailPath = path.join(this.uploadsDir, thumbnailFilename);
 
     await sharp(originalPath)
@@ -52,7 +55,10 @@ export class StorageService {
    * Delete both original and thumbnail
    */
   async deleteImageAndThumbnail(originalFilename: string): Promise<void> {
-    const thumbnailFilename = originalFilename.replace('-original', '-thumb');
+    // Extract extension and insert -thumb before it (works with any filename format)
+    const ext = path.extname(originalFilename);
+    const nameWithoutExt = originalFilename.slice(0, -ext.length);
+    const thumbnailFilename = `${nameWithoutExt}-thumb${ext}`;
     await this.deleteFile(originalFilename);
     await this.deleteFile(thumbnailFilename);
   }

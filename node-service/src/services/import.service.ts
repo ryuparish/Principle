@@ -7,6 +7,7 @@ import { randomUUID } from 'crypto';
 
 // Service URLs
 const EDGE_SERVICE_URL = process.env.EDGE_SERVICE_URL || 'http://localhost:3002';
+const MEDIA_SERVICE_URL = process.env.MEDIA_SERVICE_URL || 'http://localhost:3003';
 
 export class ImportService {
   private conceptMapRepository = AppDataSource.getRepository(ConceptMap);
@@ -22,12 +23,16 @@ export class ImportService {
 
     // Generate new IDs to avoid conflicts
     const idMapping = this.generateIdMapping(data);
+    const mediaMapping = this.generateMediaMapping(data);
 
     // Create the concept map
     const newMap = await this.createConceptMap(data, idMapping);
 
-    // Create nodes with new IDs
-    await this.createNodes(data, idMapping, newMap.id);
+    // Create media BEFORE nodes (nodes reference media)
+    await this.createMedia(data, mediaMapping, newMap.id);
+
+    // Create nodes with new IDs and mapped media IDs
+    await this.createNodes(data, idMapping, mediaMapping, newMap.id);
 
     // Create edges with mapped IDs
     await this.createEdges(data, idMapping, newMap.id);
@@ -79,6 +84,21 @@ export class ImportService {
   }
 
   /**
+   * Generate mapping from old media IDs to new UUIDs
+   */
+  private generateMediaMapping(data: ConceptMapExport): Map<string, string> {
+    const mapping = new Map<string, string>();
+
+    if (data.media && Array.isArray(data.media)) {
+      data.media.forEach(media => {
+        mapping.set(media.id, randomUUID());
+      });
+    }
+
+    return mapping;
+  }
+
+  /**
    * Create the concept map with a new ID
    */
   private async createConceptMap(
@@ -102,9 +122,15 @@ export class ImportService {
   private async createNodes(
     data: ConceptMapExport,
     idMapping: Map<string, string>,
+    mediaMapping: Map<string, string>,
     newMapId: string
   ): Promise<void> {
     const nodes = data.nodes.map(node => {
+      // Map old imageIds to new media IDs
+      const mappedImageIds = (node.imageIds || [])
+        .map((oldId: string) => mediaMapping.get(oldId))
+        .filter((id: string | undefined): id is string => id !== undefined);
+
       return this.nodeRepository.create({
         id: idMapping.get(node.id),
         conceptMapId: newMapId,
@@ -113,13 +139,116 @@ export class ImportService {
         position: node.position || { x: 0, y: 0 },
         style: node.style || {},
         shape: node.shape || 'rounded-rectangle',
-        imageIds: node.imageIds || [],
+        imageIds: mappedImageIds,
         tags: node.tags || [],
         isDeleted: false, // Don't import deleted nodes
       });
     });
 
     await this.nodeRepository.save(nodes);
+  }
+
+  /**
+   * Create media records by importing from source storage
+   * Supports both local and S3 storage modes
+   */
+  private async createMedia(
+    data: ConceptMapExport,
+    mediaMapping: Map<string, string>,
+    newMapId: string
+  ): Promise<void> {
+    if (!data.media || data.media.length === 0) {
+      return; // No media to import
+    }
+
+    const useS3 = process.env.USE_S3_STORAGE === 'true';
+
+    for (const media of data.media) {
+      const newMediaId = mediaMapping.get(media.id);
+      if (!newMediaId) {
+        console.warn(`No mapping found for media ${media.id}`);
+        continue;
+      }
+
+      try {
+        if (media.storageMode === 's3' && media.s3Url) {
+          // S3 -> S3: Download and re-upload
+          await this.importFromS3(newMediaId, media);
+        } else if (media.storageMode === 'local' && media.filename) {
+          // Local -> Local: Copy files
+          await this.importFromLocal(newMediaId, media);
+        } else if (useS3 && media.filename) {
+          // Local -> S3: Upload local file to S3
+          await this.migrateLocalToS3(newMediaId, media);
+        } else if (!useS3 && media.s3Url) {
+          // S3 -> Local: Download S3 file to local
+          await this.migrateS3ToLocal(newMediaId, media);
+        } else {
+          console.warn(`Cannot import media ${media.id}: incompatible storage mode`);
+        }
+      } catch (error: any) {
+        console.error(`Failed to import media ${media.id}:`, error.message);
+        // Continue with other media even if one fails
+      }
+    }
+  }
+
+  /**
+   * Import from local files (Local -> Local)
+   */
+  private async importFromLocal(newId: string, media: any): Promise<void> {
+    await axios.post(`${MEDIA_SERVICE_URL}/import-local`, {
+      id: newId,
+      sourceFilename: media.filename,
+      sourceThumbnail: media.thumbnailFilename,
+      originalName: media.originalName,
+      mimeType: media.mimeType,
+      width: media.width,
+      height: media.height
+    });
+  }
+
+  /**
+   * Import from S3 (S3 -> S3)
+   */
+  private async importFromS3(newId: string, media: any): Promise<void> {
+    await axios.post(`${MEDIA_SERVICE_URL}/import-s3`, {
+      id: newId,
+      sourceUrl: media.s3Url,
+      originalName: media.originalName,
+      mimeType: media.mimeType,
+      width: media.width,
+      height: media.height
+    });
+  }
+
+  /**
+   * Migrate: Local file -> S3
+   */
+  private async migrateLocalToS3(newId: string, media: any): Promise<void> {
+    await axios.post(`${MEDIA_SERVICE_URL}/migrate-to-s3`, {
+      id: newId,
+      sourceFilename: media.filename,
+      sourceThumbnail: media.thumbnailFilename,
+      originalName: media.originalName,
+      mimeType: media.mimeType,
+      width: media.width,
+      height: media.height
+    });
+  }
+
+  /**
+   * Migrate: S3 URL -> Local file
+   */
+  private async migrateS3ToLocal(newId: string, media: any): Promise<void> {
+    await axios.post(`${MEDIA_SERVICE_URL}/migrate-to-local`, {
+      id: newId,
+      sourceUrl: media.s3Url,
+      originalName: media.originalName,
+      mimeType: media.mimeType,
+      width: media.width,
+      height: media.height
+    });
   }
 
   /**

@@ -106,6 +106,112 @@ export class MediaController {
     }
   }
 
+  async importLocal(req: Request, res: Response) {
+    try {
+      const { id, sourceFilename, sourceThumbnail, originalName, mimeType, width, height } = req.body;
+
+      if (!id || !sourceFilename || !originalName || !mimeType) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const media = await mediaService.importFromLocal({
+        id,
+        sourceFilename,
+        sourceThumbnail,
+        originalName,
+        mimeType,
+        width,
+        height
+      });
+
+      res.status(201).json(media);
+    } catch (error: any) {
+      console.error('Error importing local media:', error);
+      res.status(error.statusCode || 500).json({
+        error: error.message || 'Failed to import media'
+      });
+    }
+  }
+
+  async importS3(req: Request, res: Response) {
+    try {
+      const { id, sourceUrl, originalName, mimeType, width, height } = req.body;
+
+      if (!id || !sourceUrl || !originalName || !mimeType) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const media = await mediaService.importFromS3({
+        id,
+        sourceUrl,
+        originalName,
+        mimeType,
+        width,
+        height
+      });
+
+      res.status(201).json(media);
+    } catch (error: any) {
+      console.error('Error importing S3 media:', error);
+      res.status(error.statusCode || 500).json({
+        error: error.message || 'Failed to import media'
+      });
+    }
+  }
+
+  async migrateToS3(req: Request, res: Response) {
+    try {
+      const { id, sourceFilename, sourceThumbnail, originalName, mimeType, width, height } = req.body;
+
+      if (!id || !sourceFilename || !originalName || !mimeType) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const media = await mediaService.migrateLocalToS3({
+        id,
+        sourceFilename,
+        sourceThumbnail,
+        originalName,
+        mimeType,
+        width,
+        height
+      });
+
+      res.status(201).json(media);
+    } catch (error: any) {
+      console.error('Error migrating to S3:', error);
+      res.status(error.statusCode || 500).json({
+        error: error.message || 'Failed to migrate to S3'
+      });
+    }
+  }
+
+  async migrateToLocal(req: Request, res: Response) {
+    try {
+      const { id, sourceUrl, originalName, mimeType, width, height } = req.body;
+
+      if (!id || !sourceUrl || !originalName || !mimeType) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const media = await mediaService.migrateS3ToLocal({
+        id,
+        sourceUrl,
+        originalName,
+        mimeType,
+        width,
+        height
+      });
+
+      res.status(201).json(media);
+    } catch (error: any) {
+      console.error('Error migrating to local:', error);
+      res.status(error.statusCode || 500).json({
+        error: error.message || 'Failed to migrate to local'
+      });
+    }
+  }
+
   async delete(req: Request, res: Response) {
     try {
       const { id } = req.params;

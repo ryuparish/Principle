@@ -242,10 +242,10 @@ export class ShareService {
     if (mediaIds.length === 0) return [];
 
     try {
-      const response = await axios.get(`${MEDIA_SERVICE_URL}/media/bulk`, {
+      const response = await axios.get(`${MEDIA_SERVICE_URL}/bulk`, {
         params: { ids: mediaIds.join(',') }
       });
-      return response.data || [];
+      return response.data.media || [];
     } catch (error) {
       console.error('Failed to fetch media:', error);
       return [];
@@ -291,20 +291,38 @@ export class ShareService {
 
   /**
    * Sanitize media data for export
+   * Supports both local and S3 storage modes
    */
   private sanitizeMedia(media: any): any {
-    const baseUrl = process.env.MEDIA_BASE_URL || 'http://localhost:3000';
+    const useS3 = process.env.USE_S3_STORAGE === 'true';
 
-    return {
-      id: media.id,
-      nodeId: media.nodeId,
-      originalName: media.originalName,
-      url: `${baseUrl}/api/media/file/${media.filename}`,
-      thumbnailUrl: `${baseUrl}/api/media/file/${media.thumbnailFilename}`,
-      width: media.width,
-      height: media.height
-      // Excluded: internal storage paths, uploadedAt
-    };
+    if (useS3) {
+      // S3 mode: export S3 URLs
+      return {
+        id: media.id,
+        nodeId: media.nodeId,
+        originalName: media.originalName,
+        s3Key: media.s3Key,
+        s3Url: media.s3Url,
+        mimeType: media.mimeType,
+        width: media.width,
+        height: media.height,
+        storageMode: 's3'
+      };
+    } else {
+      // Local mode: export filenames
+      return {
+        id: media.id,
+        nodeId: media.nodeId,
+        originalName: media.originalName,
+        filename: media.filename,
+        thumbnailFilename: media.thumbnailFilename,
+        mimeType: media.mimeType,
+        width: media.width,
+        height: media.height,
+        storageMode: 'local'
+      };
+    }
   }
 }
 

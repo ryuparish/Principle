@@ -12,6 +12,12 @@ router.post('/upload', upload.single('image'), (req, res) =>
 // Cleanup orphaned media (specific path before /:id)
 router.post('/cleanup', (req, res) => mediaController.cleanup(req, res));
 
+// Import endpoints (specific paths before /:id)
+router.post('/import-local', (req, res) => mediaController.importLocal(req, res));
+router.post('/import-s3', (req, res) => mediaController.importS3(req, res));
+router.post('/migrate-to-s3', (req, res) => mediaController.migrateToS3(req, res));
+router.post('/migrate-to-local', (req, res) => mediaController.migrateToLocal(req, res));
+
 // Get media by IDs (bulk) (specific path before /:id)
 router.get('/bulk', (req, res) => mediaController.getByIds(req, res));
 
