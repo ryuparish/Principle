@@ -1,0 +1,256 @@
+/* Walk Presentation Overlay */
+.walk-presentation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+/* Presentation Controls Bar */
+.walk-presentation-controls {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease, pointer-events 0s 0.3s;
+}
+
+.walk-presentation:hover .walk-presentation-controls {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.3s ease, pointer-events 0s 0s;
+}
+
+.walk-presentation-title {
+  color: #ffffff;
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.walk-presentation-close {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.walk-presentation-close:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Navigation Buttons */
+.walk-presentation-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease, pointer-events 0s 0.3s;
+}
+
+.walk-presentation:hover .walk-presentation-nav {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.3s ease, pointer-events 0s 0s;
+}
+
+.walk-presentation-nav.prev {
+  left: 1.5rem;
+}
+
+.walk-presentation-nav.next {
+  right: 1.5rem;
+}
+
+.walk-presentation-nav button {
+  width: 3.5rem;
+  height: 3.5rem;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  font-size: 1.75rem;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.walk-presentation-nav button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.1);
+}
+
+.walk-presentation-nav button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Annotation Panel */
+.walk-presentation-annotation {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.7));
+  padding: 1.5rem 2rem 2rem;
+  pointer-events: auto;
+  backdrop-filter: blur(8px);
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+.walk-presentation-step-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.walk-presentation-step-number {
+  width: 2rem;
+  height: 2rem;
+  background: #8b5cf6;
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.walk-presentation-step-title {
+  color: #ffffff;
+  font-size: 1.125rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.walk-presentation-step-of {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem;
+}
+
+.walk-presentation-annotation-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-top: 0.5rem;
+}
+
+.walk-presentation-annotation-text p {
+  margin: 0 0 0.75rem 0;
+}
+
+.walk-presentation-annotation-text p:last-child {
+  margin-bottom: 0;
+}
+
+/* Progress Dots */
+.walk-presentation-progress {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.walk-presentation-dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  padding: 0;
+}
+
+.walk-presentation-dot:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(1.2);
+}
+
+.walk-presentation-dot.active {
+  background: #8b5cf6;
+  transform: scale(1.3);
+}
+
+.walk-presentation-dot.visited {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+/* Keyboard Hints */
+.walk-presentation-hints {
+  position: absolute;
+  bottom: 1rem;
+  right: 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.walk-presentation:hover .walk-presentation-hints {
+  opacity: 0.6;
+}
+
+.walk-presentation-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+}
+
+.walk-presentation-hint kbd {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-family: monospace;
+}
+
+/* Empty annotation */
+.walk-presentation-no-annotation {
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .walk-presentation-controls,
+  .walk-presentation-nav,
+  .walk-presentation-hints,
+  .walk-presentation-dot,
+  .walk-presentation-nav button,
+  .walk-presentation-close {
+    transition: none;
+  }
+}

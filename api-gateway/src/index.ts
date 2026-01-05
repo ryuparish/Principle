@@ -11,6 +11,7 @@ import mediaRoutes from './routes/media.routes';
 import shareRoutes from './routes/share.routes';
 import authRoutes from './routes/auth.routes';
 import driveRoutes from './routes/drive.routes';
+import walkRoutes from './routes/walk.routes';
 import { services } from './config/services.config';
 import { shareLimiter } from './middleware/rateLimiter';
 
@@ -47,7 +48,8 @@ app.get('/', (req: Request, res: Response) => {
       media: '/api/media',
       share: '/api/share',
       auth: '/api/auth',
-      drive: '/api/drive'
+      drive: '/api/drive',
+      walks: '/api/walks'
     }
   });
 });
@@ -62,6 +64,7 @@ app.use('/api/media', mediaRoutes);
 app.use('/api/share', shareLimiter, shareRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/drive', driveRoutes);
+app.use('/api/walks', walkRoutes);
 
 // Check service health on startup
 async function checkServicesHealth() {

@@ -2,10 +2,11 @@ import 'reflect-metadata';  // MUST BE FIRST for TypeORM decorators
 import express, { Request, Response } from 'express';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { AppDataSource } from './data-source';
+import { AppDataSource, ensureWalkTables } from './data-source';
 import mindmapRoutes from './routes/mindmap.routes';
 import nodeRoutes from './routes/node.routes';
 import shareRoutes from './routes/share.routes';
+import walkRoutes from './routes/walk.routes';
 
 dotenv.config();
 
@@ -35,7 +36,8 @@ app.get('/', (req: Request, res: Response) => {
     endpoints: {
       mindmaps: '/mindmaps',
       nodes: '/nodes',
-      share: '/share'
+      share: '/share',
+      walks: '/walks'
     }
   });
 });
@@ -44,11 +46,15 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/mindmaps', mindmapRoutes);
 app.use('/nodes', nodeRoutes);
 app.use('/share', shareRoutes);
+app.use('/walks', walkRoutes);
 
 // Initialize TypeORM and start server
 AppDataSource.initialize()
-  .then(() => {
+  .then(async () => {
     console.log('✅ TypeORM connected to SQLite database');
+
+    // Ensure walk tables exist (handles schema drift when synchronize is false)
+    await ensureWalkTables();
 
     // Start server
     app.listen(PORT, () => {

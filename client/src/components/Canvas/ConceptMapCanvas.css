@@ -47,6 +47,13 @@
   box-shadow: 0 2px 12px rgba(255, 107, 53, 0.4);
 }
 
+/* Walk toggle active state */
+.toolbar-button.walk-toggle.active {
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+  color: white;
+  box-shadow: 0 2px 12px rgba(139, 92, 246, 0.4);
+}
+
 /* Tag Sidebar Toggle Button */
 .tag-sidebar-toggle {
   width: 3rem;

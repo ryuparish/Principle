@@ -21,6 +21,7 @@ export async function createDataSource(): Promise<DataSource> {
   const { ConceptMap } = await import('../entities/ConceptMap.js');
   const { Edge } = await import('../entities/Edge.js');
   const { Media } = await import('../entities/Media.js');
+  const { Walk, WalkStep } = await import('../entities/Walk.js');
 
   // Load database file for sql.js
   let database: Uint8Array | undefined;
@@ -35,7 +36,7 @@ export async function createDataSource(): Promise<DataSource> {
     database: database,
     location: dbPath,
     autoSave: true, // Auto-save changes to the file
-    entities: [Node, ConceptMap, Edge, Media],
+    entities: [Node, ConceptMap, Edge, Media, Walk, WalkStep],
     synchronize: false, // Never auto-sync, respect existing schema
     logging: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : false
   });
@@ -49,6 +50,9 @@ export async function createDataSource(): Promise<DataSource> {
 
     // Ensure edge table has all required columns
     await ensureEdgeColumns(dataSourceInstance);
+
+    // Ensure walk tables exist
+    await ensureWalkTables(dataSourceInstance);
 
     return dataSourceInstance;
   } catch (error) {
@@ -116,6 +120,61 @@ async function ensureMediaTable(dataSource: DataSource): Promise<void> {
     }
   } catch (error) {
     logger.error('Failed to ensure media table', error);
+    // Don't throw - let the app continue even if this fails
+  }
+}
+
+async function ensureWalkTables(dataSource: DataSource): Promise<void> {
+  try {
+    // Check if walks table exists
+    const walkTables = await dataSource.query(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='walks'"
+    );
+
+    if (walkTables.length === 0) {
+      logger.info('Creating walks table...');
+      await dataSource.query(`
+        CREATE TABLE IF NOT EXISTS walks (
+          id TEXT PRIMARY KEY,
+          conceptMapId TEXT NOT NULL,
+          name TEXT NOT NULL,
+          description TEXT,
+          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (conceptMapId) REFERENCES mindmaps(id) ON DELETE CASCADE
+        )
+      `);
+      await dataSource.query('CREATE INDEX IF NOT EXISTS idx_walks_conceptMapId ON walks(conceptMapId)');
+      logger.info('Walks table created successfully');
+    }
+
+    // Check if walk_steps table exists
+    const stepTables = await dataSource.query(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='walk_steps'"
+    );
+
+    if (stepTables.length === 0) {
+      logger.info('Creating walk_steps table...');
+      await dataSource.query(`
+        CREATE TABLE IF NOT EXISTS walk_steps (
+          id TEXT PRIMARY KEY,
+          walkId TEXT NOT NULL,
+          nodeId TEXT NOT NULL,
+          "order" INTEGER NOT NULL,
+          annotation TEXT,
+          zoomLevel REAL DEFAULT 1.5,
+          duration INTEGER,
+          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (walkId) REFERENCES walks(id) ON DELETE CASCADE,
+          FOREIGN KEY (nodeId) REFERENCES nodes(id) ON DELETE CASCADE
+        )
+      `);
+      await dataSource.query('CREATE INDEX IF NOT EXISTS idx_walk_steps_walkId ON walk_steps(walkId)');
+      await dataSource.query('CREATE INDEX IF NOT EXISTS idx_walk_steps_nodeId ON walk_steps(nodeId)');
+      logger.info('Walk_steps table created successfully');
+    }
+  } catch (error) {
+    logger.error('Failed to ensure walk tables', error);
     // Don't throw - let the app continue even if this fails
   }
 }

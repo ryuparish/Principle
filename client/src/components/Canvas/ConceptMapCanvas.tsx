@@ -48,6 +48,9 @@ import { EdgesProvider } from '../../contexts/EdgesContext';
 import { PasteShapeSelector } from '../Paste/PasteShapeSelector';
 import { PortalCreator } from '../Portal/PortalCreator';
 import { LayoutOptionsSelector, LayoutOptions } from '../Layout/LayoutOptionsSelector';
+import { WalkPanel } from '../Walk/WalkPanel';
+import { WalkPresentation } from '../Walk/WalkPresentation';
+import { useWalkStore } from '../../store/walkStore';
 import type { EdgeTypePreset } from '../../types';
 import type { PasteShapeOption } from '../../types/paste.types';
 
@@ -88,6 +91,7 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
   } = useConceptMapStore();
   const { getFilteredNodes, syncTagsFromNodes, clearFilters } = useTagStore();
   const { enabled: warmthEnabled, toggleEnabled: toggleWarmth } = useWarmthStore();
+  const { isEditing: walkEditing, isPresenting: walkPresenting, addStep: addWalkStep, currentWalk, loadWalks, panelOpen: walkPanelOpen, togglePanel: toggleWalkPanel, closePanel: closeWalkPanel } = useWalkStore();
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
@@ -516,6 +520,17 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
     [createNode, project]
   );
 
+  // Handle node click - intercept for walk editing mode
+  const onNodeClick = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      if (walkEditing && currentWalk) {
+        event.stopPropagation();
+        addWalkStep(node.id);
+      }
+    },
+    [walkEditing, currentWalk, addWalkStep]
+  );
+
   // Handle search node selection
   const handleSelectNode = useCallback(
     (nodeId: string) => {
@@ -675,6 +690,7 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
           onEdgesDelete={onEdgesDelete}
           onEdgeContextMenu={onEdgeContextMenu}
           onPaneClick={onPaneClick}
+          onNodeClick={onNodeClick}
           onSelectionChange={onSelectionChange}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
@@ -786,6 +802,14 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
         >
           🏷️
         </button>
+        <button
+          className={`toolbar-button walk-toggle ${walkPanelOpen || walkEditing ? 'active' : ''}`}
+          onClick={toggleWalkPanel}
+          title="Walks (gw)"
+          aria-label="Toggle walks panel"
+        >
+          🚶
+        </button>
         <ShareButton onClick={() => setShareModalOpen(true)} />
       </div>
 
@@ -805,6 +829,16 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
         isOpen={shareModalOpen}
         onClose={() => setShareModalOpen(false)}
       />
+
+      {/* Walk Panel */}
+      <WalkPanel
+        isOpen={walkPanelOpen}
+        onClose={closeWalkPanel}
+        conceptMapId={conceptMapId}
+      />
+
+      {/* Walk Presentation Mode */}
+      {walkPresenting && <WalkPresentation />}
       </div>
     </EdgesProvider>
   );

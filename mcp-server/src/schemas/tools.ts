@@ -271,3 +271,67 @@ export type UploadImageInput = z.infer<typeof uploadImageSchema>;
 export type FetchImageFromUrlInput = z.infer<typeof fetchImageFromUrlSchema>;
 export type GetNodeImagesInput = z.infer<typeof getNodeImagesSchema>;
 export type DeleteImageInput = z.infer<typeof deleteImageSchema>;
+
+// ============================================
+// Walk Schemas
+// ============================================
+
+export const createWalkSchema = z.object({
+  mapId: z.string().uuid('Invalid map ID'),
+  name: z.string().min(1, 'Name is required').max(200, 'Name too long'),
+  description: z.string().max(1000).optional()
+});
+
+export const updateWalkSchema = z.object({
+  walkId: z.string().uuid('Invalid walk ID'),
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().max(1000).optional()
+});
+
+export const deleteWalkSchema = z.object({
+  walkId: z.string().uuid('Invalid walk ID')
+});
+
+export const getWalkSchema = z.object({
+  walkId: z.string().uuid('Invalid walk ID')
+});
+
+export const listWalksSchema = z.object({
+  mapId: z.string().uuid('Invalid map ID')
+});
+
+export const addStepSchema = z.object({
+  walkId: z.string().uuid('Invalid walk ID'),
+  nodeId: z.string().uuid('Invalid node ID'),
+  order: z.number().int().min(0).optional(),
+  annotation: z.string().max(5000).optional(),
+  zoomLevel: z.number().min(0.1).max(5).optional(),
+  duration: z.number().int().min(0).optional()
+});
+
+export const updateStepSchema = z.object({
+  stepId: z.string().uuid('Invalid step ID'),
+  annotation: z.string().max(5000).optional(),
+  zoomLevel: z.number().min(0.1).max(5).optional(),
+  duration: z.number().int().min(0).optional(),
+  order: z.number().int().min(0).optional()
+});
+
+export const removeStepSchema = z.object({
+  stepId: z.string().uuid('Invalid step ID')
+});
+
+export const reorderStepsSchema = z.object({
+  walkId: z.string().uuid('Invalid walk ID'),
+  stepIds: z.array(z.string().uuid('Invalid step ID')).min(1, 'At least one step required')
+});
+
+export type CreateWalkInput = z.infer<typeof createWalkSchema>;
+export type UpdateWalkInput = z.infer<typeof updateWalkSchema>;
+export type DeleteWalkInput = z.infer<typeof deleteWalkSchema>;
+export type GetWalkInput = z.infer<typeof getWalkSchema>;
+export type ListWalksInput = z.infer<typeof listWalksSchema>;
+export type AddStepInput = z.infer<typeof addStepSchema>;
+export type UpdateStepInput = z.infer<typeof updateStepSchema>;
+export type RemoveStepInput = z.infer<typeof removeStepSchema>;
+export type ReorderStepsInput = z.infer<typeof reorderStepsSchema>;

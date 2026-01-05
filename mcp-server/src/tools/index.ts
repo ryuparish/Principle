@@ -5,6 +5,7 @@ import { EdgeService } from '../services/EdgeService.js';
 import { LayoutService } from '../services/LayoutService.js';
 import { MediaService } from '../services/MediaService.js';
 import { DriveService } from '../services/DriveService.js';
+import { WalkService } from '../services/WalkService.js';
 import { handleUploadImage } from './media/uploadImage.js';
 import { handleFetchImageFromUrl } from './media/fetchImageFromUrl.js';
 import { handleGetNodeImages } from './media/getNodeImages.js';
@@ -27,6 +28,15 @@ import { handleAutoLayout } from './layout/autoLayout.js';
 import { handleAttachDriveFile } from './drive/attachDriveFile.js';
 import { handleListDriveAttachments } from './drive/listDriveAttachments.js';
 import { handleRemoveDriveFile } from './drive/removeDriveFile.js';
+import { handleCreateWalk } from './walks/createWalk.js';
+import { handleUpdateWalk } from './walks/updateWalk.js';
+import { handleDeleteWalk } from './walks/deleteWalk.js';
+import { handleGetWalk } from './walks/getWalk.js';
+import { handleListWalks } from './walks/listWalks.js';
+import { handleAddStep } from './walks/addStep.js';
+import { handleUpdateStep } from './walks/updateStep.js';
+import { handleRemoveStep } from './walks/removeStep.js';
+import { handleReorderSteps } from './walks/reorderSteps.js';
 import { logger } from '../config/logging.js';
 import {
   CallToolRequestSchema,
@@ -40,7 +50,8 @@ export function registerTools(
   edgeService: EdgeService,
   layoutService: LayoutService,
   mediaService: MediaService,
-  driveService: DriveService
+  driveService: DriveService,
+  walkService: WalkService
 ) {
   // List available tools
   server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -625,6 +636,191 @@ export function registerTools(
             },
             required: ['nodeId', 'fileId']
           }
+        },
+
+        // Walk Tools
+        {
+          name: 'create_walk',
+          description: 'Create a new walk (presentation sequence) for a concept map. Walks allow you to create guided tours through nodes with annotations and custom zoom levels.',
+          inputSchema: {
+            type: 'object' as const,
+            properties: {
+              mapId: {
+                type: 'string',
+                description: 'UUID of the concept map'
+              },
+              name: {
+                type: 'string',
+                description: 'Name of the walk'
+              },
+              description: {
+                type: 'string',
+                description: 'Optional description of the walk'
+              }
+            },
+            required: ['mapId', 'name']
+          }
+        },
+        {
+          name: 'update_walk',
+          description: 'Update a walk\'s name or description.',
+          inputSchema: {
+            type: 'object' as const,
+            properties: {
+              walkId: {
+                type: 'string',
+                description: 'UUID of the walk to update'
+              },
+              name: {
+                type: 'string',
+                description: 'New name for the walk'
+              },
+              description: {
+                type: 'string',
+                description: 'New description for the walk'
+              }
+            },
+            required: ['walkId']
+          }
+        },
+        {
+          name: 'delete_walk',
+          description: 'Delete a walk and all its steps.',
+          inputSchema: {
+            type: 'object' as const,
+            properties: {
+              walkId: {
+                type: 'string',
+                description: 'UUID of the walk to delete'
+              }
+            },
+            required: ['walkId']
+          }
+        },
+        {
+          name: 'get_walk',
+          description: 'Get a walk with all its steps. Returns walk metadata and step details including annotations and zoom levels.',
+          inputSchema: {
+            type: 'object' as const,
+            properties: {
+              walkId: {
+                type: 'string',
+                description: 'UUID of the walk to retrieve'
+              }
+            },
+            required: ['walkId']
+          }
+        },
+        {
+          name: 'list_walks',
+          description: 'List all walks for a concept map.',
+          inputSchema: {
+            type: 'object' as const,
+            properties: {
+              mapId: {
+                type: 'string',
+                description: 'UUID of the concept map'
+              }
+            },
+            required: ['mapId']
+          }
+        },
+        {
+          name: 'add_walk_step',
+          description: 'Add a node as a step to a walk. Steps can have annotations, custom zoom levels, and auto-advance durations.',
+          inputSchema: {
+            type: 'object' as const,
+            properties: {
+              walkId: {
+                type: 'string',
+                description: 'UUID of the walk'
+              },
+              nodeId: {
+                type: 'string',
+                description: 'UUID of the node to add as a step'
+              },
+              order: {
+                type: 'number',
+                description: 'Position in the walk (0-indexed). If not specified, appends to end.'
+              },
+              annotation: {
+                type: 'string',
+                description: 'Text annotation to display during this step'
+              },
+              zoomLevel: {
+                type: 'number',
+                description: 'Zoom level for this step (0.1-5, default: 1.5)'
+              },
+              duration: {
+                type: 'number',
+                description: 'Auto-advance duration in milliseconds (optional)'
+              }
+            },
+            required: ['walkId', 'nodeId']
+          }
+        },
+        {
+          name: 'update_walk_step',
+          description: 'Update a walk step\'s annotation, zoom level, duration, or order.',
+          inputSchema: {
+            type: 'object' as const,
+            properties: {
+              stepId: {
+                type: 'string',
+                description: 'UUID of the step to update'
+              },
+              annotation: {
+                type: 'string',
+                description: 'New annotation text'
+              },
+              zoomLevel: {
+                type: 'number',
+                description: 'New zoom level (0.1-5)'
+              },
+              duration: {
+                type: 'number',
+                description: 'New auto-advance duration in milliseconds'
+              },
+              order: {
+                type: 'number',
+                description: 'New position in the walk'
+              }
+            },
+            required: ['stepId']
+          }
+        },
+        {
+          name: 'remove_walk_step',
+          description: 'Remove a step from a walk.',
+          inputSchema: {
+            type: 'object' as const,
+            properties: {
+              stepId: {
+                type: 'string',
+                description: 'UUID of the step to remove'
+              }
+            },
+            required: ['stepId']
+          }
+        },
+        {
+          name: 'reorder_walk_steps',
+          description: 'Reorder all steps in a walk by providing step IDs in the new order.',
+          inputSchema: {
+            type: 'object' as const,
+            properties: {
+              walkId: {
+                type: 'string',
+                description: 'UUID of the walk'
+              },
+              stepIds: {
+                type: 'array',
+                description: 'Array of step IDs in the desired order',
+                items: { type: 'string' }
+              }
+            },
+            required: ['walkId', 'stepIds']
+          }
         }
       ]
     };
@@ -708,6 +904,34 @@ export function registerTools(
 
       case 'remove_drive_file':
         return await handleRemoveDriveFile(args, driveService);
+
+      // Walk Tools
+      case 'create_walk':
+        return await handleCreateWalk(args, walkService);
+
+      case 'update_walk':
+        return await handleUpdateWalk(args, walkService);
+
+      case 'delete_walk':
+        return await handleDeleteWalk(args, walkService);
+
+      case 'get_walk':
+        return await handleGetWalk(args, walkService);
+
+      case 'list_walks':
+        return await handleListWalks(args, walkService);
+
+      case 'add_walk_step':
+        return await handleAddStep(args, walkService);
+
+      case 'update_walk_step':
+        return await handleUpdateStep(args, walkService);
+
+      case 'remove_walk_step':
+        return await handleRemoveStep(args, walkService);
+
+      case 'reorder_walk_steps':
+        return await handleReorderSteps(args, walkService);
 
       default:
         logger.warn('Unknown tool called', { name });

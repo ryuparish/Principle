@@ -11,6 +11,7 @@ import { LayoutService } from './services/LayoutService.js';
 import { StorageService } from './services/StorageService.js';
 import { MediaService } from './services/MediaService.js';
 import { DriveService } from './services/DriveService.js';
+import { WalkService } from './services/WalkService.js';
 import { registerTools } from './tools/index.js';
 import { registerResources } from './resources/index.js';
 
@@ -31,6 +32,7 @@ async function main() {
     const storageService = new StorageService();
     const mediaService = new MediaService(dataSource, storageService);
     const driveService = new DriveService(dataSource);
+    const walkService = new WalkService(dataSource);
 
     // Create MCP server
     logger.debug('Creating MCP server');
@@ -49,7 +51,7 @@ async function main() {
 
     // Register tools and resources
     logger.debug('Registering tools');
-    registerTools(server, mapService, nodeService, edgeService, layoutService, mediaService, driveService);
+    registerTools(server, mapService, nodeService, edgeService, layoutService, mediaService, driveService, walkService);
 
     logger.debug('Registering resources');
     registerResources(server, mapService, nodeService);

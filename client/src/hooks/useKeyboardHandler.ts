@@ -7,6 +7,7 @@ import { useVimOperations } from './useVimOperations';
 import { useVimCommands } from './useVimCommands';
 import { useConceptMapStore } from '../store/conceptMapStore';
 import { useToastStore } from '../store/toastStore';
+import { useWalkStore } from '../store/walkStore';
 
 /**
  * Keyboard handler hook
@@ -20,6 +21,7 @@ export const useKeyboardHandler = () => {
   const { addToast } = useToastStore();
   const { getNode } = useReactFlow();
   const { nodes: storeNodes, edges, updateEdge } = useConceptMapStore();
+  const { togglePanel: toggleWalkPanel, addStep: addWalkStep, removeStepByNodeId: removeWalkStep, isEditing: walkIsEditing, currentWalk, isNodeInWalk } = useWalkStore();
 
   // Check if event target is an editable element
   const isEditableElement = useCallback((target: EventTarget | null): boolean => {
@@ -768,8 +770,8 @@ export const useKeyboardHandler = () => {
         return;
       }
 
-      // w - next child
-      if (vimKey.key === 'w' && !vimKey.ctrl && !vimKey.meta) {
+      // w - next child (only if no command buffer pending)
+      if (vimKey.key === 'w' && !vimKey.ctrl && !vimKey.meta && vim.state.commandBuffer === '') {
         navigation.navigateToNextChild();
         return;
       }
@@ -815,6 +817,64 @@ export const useKeyboardHandler = () => {
       if (vim.state.commandBuffer === 'g' && vimKey.key === 'l') {
         console.log('[VIM] Opening layout options selector');
         vim.openLayoutOptionsSelector();
+        vim.clearCommandBuffer();
+        return;
+      }
+
+      // gw - toggle walk panel
+      if (vim.state.commandBuffer === 'g' && vimKey.key === 'w') {
+        console.log('[VIM] Toggling walk panel');
+        toggleWalkPanel();
+        vim.clearCommandBuffer();
+        return;
+      }
+
+      // ga - add focused node to current walk (when editing)
+      if (vim.state.commandBuffer === 'g' && vimKey.key === 'a') {
+        if (vim.state.focusedNodeId && walkIsEditing && currentWalk) {
+          console.log('[VIM] Adding node to walk:', vim.state.focusedNodeId);
+          addWalkStep(vim.state.focusedNodeId);
+          addToast({
+            type: 'success',
+            message: 'Node added to walk',
+            duration: 1500
+          });
+        } else if (!walkIsEditing || !currentWalk) {
+          addToast({
+            type: 'warning',
+            message: 'Select a walk and enter edit mode first (gw)',
+            duration: 2500
+          });
+        }
+        vim.clearCommandBuffer();
+        return;
+      }
+
+      // gr - remove focused node from current walk
+      if (vim.state.commandBuffer === 'g' && vimKey.key === 'r') {
+        if (vim.state.focusedNodeId && currentWalk) {
+          if (isNodeInWalk(vim.state.focusedNodeId)) {
+            console.log('[VIM] Removing node from walk:', vim.state.focusedNodeId);
+            removeWalkStep(vim.state.focusedNodeId);
+            addToast({
+              type: 'success',
+              message: 'Node removed from walk',
+              duration: 1500
+            });
+          } else {
+            addToast({
+              type: 'warning',
+              message: 'Node is not in current walk',
+              duration: 2000
+            });
+          }
+        } else if (!currentWalk) {
+          addToast({
+            type: 'warning',
+            message: 'No walk selected',
+            duration: 2000
+          });
+        }
         vim.clearCommandBuffer();
         return;
       }
@@ -879,7 +939,7 @@ export const useKeyboardHandler = () => {
       }
     }
 
-  }, [vim, navigation, operations, executeCommand, addToast, isEditableElement, createVimKeyEvent, storeNodes, edges, updateEdge, getNode]);
+  }, [vim, navigation, operations, executeCommand, addToast, isEditableElement, createVimKeyEvent, storeNodes, edges, updateEdge, getNode, toggleWalkPanel, addWalkStep, removeWalkStep, walkIsEditing, currentWalk, isNodeInWalk]);
 
   // Attach keyboard event listener
   useEffect(() => {
