@@ -14,11 +14,13 @@ import ReactFlow, {
   useReactFlow,
   ReactFlowProvider,
   ConnectionMode,
+  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import './ConceptMapCanvas.css';
 import { useConceptMapStore } from "../../store/conceptMapStore";
 import { useTagStore } from "../../store/tagStore";
+import { useWarmthStore } from "../../store/warmthStore";
 import { queueApi } from '../../api/queue.api';
 import CustomNode from '../Node/CustomNode';
 import EdgeContextMenu from '../Edge/EdgeContextMenu';
@@ -34,9 +36,32 @@ import { ThemePicker } from '../Theme/ThemePicker';
 import { InlineTagInput } from '../Tags/InlineTagInput';
 import { ShareButton } from '../Share/ShareButton';
 import { ShareModal } from '../Share/ShareModal';
+import { EdgeTypeSelector } from '../Edge/EdgeTypeSelector';
+import {
+  SpreadBezierEdge,
+  SpreadStraightEdge,
+  SpreadStepEdge,
+  SpreadSmoothStepEdge,
+} from '../Edge/SpreadEdge';
+import { DirectEdge } from '../Edge/DirectEdge';
+import { EdgesProvider } from '../../contexts/EdgesContext';
+import { PasteShapeSelector } from '../Paste/PasteShapeSelector';
+import { PortalCreator } from '../Portal/PortalCreator';
+import { LayoutOptionsSelector, LayoutOptions } from '../Layout/LayoutOptionsSelector';
+import type { EdgeTypePreset } from '../../types';
+import type { PasteShapeOption } from '../../types/paste.types';
 
 const nodeTypes = {
   custom: CustomNode,
+};
+
+// Custom edge types that spread out multiple edges connecting to the same handle
+const edgeTypes = {
+  spread: SpreadBezierEdge,
+  'spread-straight': SpreadStraightEdge,
+  'spread-step': SpreadStepEdge,
+  'spread-smoothstep': SpreadSmoothStepEdge,
+  'direct': DirectEdge,
 };
 
 interface ConceptMapCanvasProps {
@@ -49,14 +74,20 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
     edges: storeEdges,
     loading,
     currentConceptMap,
+    conceptMaps,
     loadConceptMap,
     createNode,
     updateNodeLocal,
     deleteNodes,
     createEdge,
-    deleteEdge
+    updateEdge,
+    deleteEdge,
+    createPortalNode,
+    navigateThroughPortal,
+    autoLayout
   } = useConceptMapStore();
   const { getFilteredNodes, syncTagsFromNodes, clearFilters } = useTagStore();
+  const { enabled: warmthEnabled, toggleEnabled: toggleWarmth } = useWarmthStore();
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
@@ -73,6 +104,7 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
   const [searchOpen, setSearchOpen] = useState(false);
   const [tagSidebarOpen, setTagSidebarOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [layoutLoading, setLayoutLoading] = useState(false);
 
   // Initialize vim mode
   const { vim } = useKeyboardHandler();
@@ -238,8 +270,18 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
         currentIds.size !== filteredIds.size ||
         !Array.from(filteredIds).every(id => currentIds.has(id));
 
-      // Only sync positions if concept map changed OR IDs changed (add/delete/filter)
-      if (conceptMapChanged || idsChanged) {
+      // Check if any positions changed significantly (e.g., from auto-layout)
+      const positionsChanged = filteredNodes.some((storeNode) => {
+        const currentNode = currentNodes.find(n => n.id === storeNode.id);
+        if (!currentNode) return false;
+        // Check if position differs by more than 1 pixel (to avoid floating point issues)
+        const dx = Math.abs(currentNode.position.x - storeNode.position.x);
+        const dy = Math.abs(currentNode.position.y - storeNode.position.y);
+        return dx > 1 || dy > 1;
+      });
+
+      // Sync positions if concept map changed, IDs changed, or positions changed (auto-layout)
+      if (conceptMapChanged || idsChanged || positionsChanged) {
         return filteredNodes.map((node) => ({
           id: node.id,
           type: 'custom',
@@ -270,21 +312,67 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
 
   // Convert store edges to React Flow edges
   useEffect(() => {
-    const reactFlowEdges: Edge[] = storeEdges.map((edge) => ({
-      id: edge.id,
-      source: edge.sourceNodeId,
-      target: edge.targetNodeId,
-      sourceHandle: edge.sourceHandleId,
-      targetHandle: edge.targetHandleId,
-      label: edge.label,
-      type: edge.style.type || 'default',
-      animated: edge.style.animated || false,
-      style: {
-        stroke: edge.style.strokeColor || '#b1b1b7',
-        strokeWidth: edge.style.strokeWidth || 2,
-        strokeDasharray: edge.style.strokeDasharray
+    const reactFlowEdges: Edge[] = storeEdges.map((edge) => {
+      const style = edge.style || {};
+      const strokeColor = style.strokeColor || '#b1b1b7';
+
+      // Build marker objects using React Flow's built-in marker system
+      const markerEnd = style.markerEnd === 'none'
+        ? undefined
+        : {
+            type: style.markerEnd === 'arrowclosed' ? MarkerType.ArrowClosed : MarkerType.Arrow,
+            color: strokeColor,
+            width: 20,
+            height: 20,
+          };
+
+      const markerStart = style.markerStart && style.markerStart !== 'none'
+        ? {
+            type: style.markerStart === 'arrowclosed' ? MarkerType.ArrowClosed : MarkerType.Arrow,
+            color: strokeColor,
+            width: 20,
+            height: 20,
+          }
+        : undefined;
+
+      // Map path types to spread edge types for automatic edge spreading
+      const pathType = style.type || 'default';
+      let edgeType: string;
+      switch (pathType) {
+        case 'straight':
+          edgeType = 'spread-straight';
+          break;
+        case 'step':
+          edgeType = 'spread-step';
+          break;
+        case 'smoothstep':
+          edgeType = 'spread-smoothstep';
+          break;
+        case 'direct':
+          edgeType = 'direct';
+          break;
+        default:
+          edgeType = 'spread';
       }
-    }));
+
+      return {
+        id: edge.id,
+        source: edge.sourceNodeId,
+        target: edge.targetNodeId,
+        sourceHandle: edge.sourceHandleId,
+        targetHandle: edge.targetHandleId,
+        label: edge.label,
+        type: edgeType,
+        animated: style.animated || false,
+        markerEnd,
+        markerStart,
+        style: {
+          stroke: strokeColor,
+          strokeWidth: style.strokeWidth || 2,
+          strokeDasharray: style.strokeDasharray
+        }
+      };
+    });
     setEdges(reactFlowEdges);
   }, [storeEdges]);
 
@@ -461,43 +549,147 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
     return true;
   }, []);
 
+  // Handle edge type selection
+  const handleEdgeTypeSelect = useCallback(
+    async (preset: EdgeTypePreset) => {
+      const edgeId = vim.state.edgeTypeSelectorId;
+      if (!edgeId) return;
+
+      try {
+        await updateEdge(edgeId, {
+          style: {
+            ...preset.style,
+            edgeType: preset.id
+          }
+        });
+        vim.closeEdgeTypeSelector();
+      } catch (error) {
+        console.error('Failed to update edge type:', error);
+      }
+    },
+    [vim, updateEdge]
+  );
+
+  // Handle paste shape selection
+  const handlePasteShapeSelect = useCallback(
+    async (shape: PasteShapeOption) => {
+      const { pasteCount, pasteAsConnected, yankRegister, focusedNodeId } = vim.state;
+
+      // Execute paste with the selected shape
+      const { executePaste } = await import('../../services/operatorEngine');
+      const createdNodeIds = await executePaste(
+        yankRegister,
+        focusedNodeId,
+        pasteAsConnected,
+        pasteCount,
+        shape.id as any,
+        createNode,
+        createEdge
+      );
+
+      // Focus first pasted node
+      if (createdNodeIds.length > 0) {
+        vim.setFocus(createdNodeIds[0]);
+      }
+
+      vim.closePasteShapeSelector();
+    },
+    [vim, createNode, createEdge]
+  );
+
+  // Handle portal creation
+  const handlePortalCreate = useCallback(
+    async (targetMapId: string, targetNodeId: string) => {
+      const { focusedNodeId } = vim.state;
+      if (!focusedNodeId || !currentConceptMap) return;
+
+      // Get focused node position
+      const focusedNode = storeNodes.find(n => n.id === focusedNodeId);
+      if (!focusedNode) return;
+
+      // Create portal near focused node
+      await createPortalNode(
+        targetMapId,
+        targetNodeId,
+        {
+          x: focusedNode.position.x + 200,
+          y: focusedNode.position.y
+        }
+      );
+
+      vim.closePortalCreator();
+    },
+    [vim, currentConceptMap, storeNodes, createPortalNode]
+  );
+
+  // Handle portal traversal
+  const handlePortalTraversal = useCallback(
+    async (portalNode: typeof storeNodes[0]) => {
+      if (!portalNode || portalNode.nodeType !== 'portal') return;
+
+      await navigateThroughPortal(portalNode, async (mapId: string, targetNodeId?: string) => {
+        // Load the target map
+        await loadConceptMap(mapId);
+
+        // Focus on the target node after map loads
+        if (targetNodeId) {
+          setTimeout(() => {
+            vim.setFocus(targetNodeId);
+          }, 100);
+        }
+      });
+    },
+    [navigateThroughPortal, loadConceptMap, vim]
+  );
+
   // Show loading spinner while initial load
   if (loading && nodes.length === 0) {
     return <Spinner fullscreen message="Loading concept map..." />;
   }
 
-  return (
-    <div style={{ width: '100%', height: '100vh' }}>
-      {searchOpen && (
-        <SearchBar
-          onSelectNode={handleSelectNode}
-          onClose={() => setSearchOpen(false)}
-        />
-      )}
+  // Convert store edges to context format for SpreadEdge components
+  const edgesForContext = storeEdges.map((e) => ({
+    id: e.id,
+    sourceNodeId: e.sourceNodeId,
+    targetNodeId: e.targetNodeId,
+    sourceHandleId: e.sourceHandleId,
+    targetHandleId: e.targetHandleId,
+  }));
 
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onEdgesDelete={onEdgesDelete}
-        onEdgeContextMenu={onEdgeContextMenu}
-        onPaneClick={onPaneClick}
-        onSelectionChange={onSelectionChange}
-        nodeTypes={nodeTypes}
-        connectionMode={ConnectionMode.Loose}
-        isValidConnection={isValidConnection}
-        selectionOnDrag
-        selectionKeyCode="Shift"
-        multiSelectionKeyCode="Meta"
-        fitView
-      >
-        <Controls />
-        <MiniMap />
-        <Background gap={12} size={1} />
-        <VimOverlay vimState={vim.state} />
-      </ReactFlow>
+  return (
+    <EdgesProvider edges={edgesForContext}>
+      <div style={{ width: '100%', height: '100vh' }} className={warmthEnabled ? 'warmth-enabled' : ''}>
+        {searchOpen && (
+          <SearchBar
+            onSelectNode={handleSelectNode}
+            onClose={() => setSearchOpen(false)}
+          />
+        )}
+
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onEdgesDelete={onEdgesDelete}
+          onEdgeContextMenu={onEdgeContextMenu}
+          onPaneClick={onPaneClick}
+          onSelectionChange={onSelectionChange}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          connectionMode={ConnectionMode.Loose}
+          isValidConnection={isValidConnection}
+          selectionOnDrag
+          selectionKeyCode="Shift"
+          multiSelectionKeyCode="Meta"
+          fitView
+        >
+          <Controls />
+          <MiniMap />
+          <Background gap={12} size={1} />
+          <VimOverlay vimState={vim.state} />
+        </ReactFlow>
 
       {edgeMenuState && (
         <EdgeContextMenu
@@ -512,6 +704,51 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
         <EdgeLabelEditor edgeId={vim.state.edgeLabelEditorId} />
       )}
 
+      {vim.state.edgeTypeSelectorId && (
+        <EdgeTypeSelector
+          currentEdgeType={
+            storeEdges.find(e => e.id === vim.state.edgeTypeSelectorId)?.style?.edgeType
+          }
+          currentPathType={
+            storeEdges.find(e => e.id === vim.state.edgeTypeSelectorId)?.style?.type
+          }
+          onSelect={handleEdgeTypeSelect}
+          onClose={() => vim.closeEdgeTypeSelector()}
+        />
+      )}
+
+      {vim.state.pasteShapeSelectorOpen && (
+        <PasteShapeSelector
+          count={vim.state.pasteCount}
+          onSelect={handlePasteShapeSelect}
+          onClose={() => vim.closePasteShapeSelector()}
+        />
+      )}
+
+      {vim.state.portalCreatorOpen && (
+        <PortalCreator
+          currentMapId={conceptMapId}
+          availableMaps={conceptMaps}
+          onCreatePortal={handlePortalCreate}
+          onClose={() => vim.closePortalCreator()}
+        />
+      )}
+
+      {vim.state.layoutOptionsSelectorOpen && (
+        <LayoutOptionsSelector
+          onSelect={async (options: LayoutOptions) => {
+            vim.closeLayoutOptionsSelector();
+            setLayoutLoading(true);
+            try {
+              await autoLayout(options);
+            } finally {
+              setLayoutLoading(false);
+            }
+          }}
+          onClose={() => vim.closeLayoutOptionsSelector()}
+        />
+      )}
+
       {/* Inline Tag Input */}
       <InlineTagInput isOpen={vim.state.tagInputOpen} />
 
@@ -520,6 +757,27 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
       {/* Toolbar */}
       <div className="canvas-toolbar">
         <ThemePicker />
+        <button
+          className="toolbar-button auto-layout-button"
+          onClick={() => {
+            if (!layoutLoading) {
+              vim.openLayoutOptionsSelector();
+            }
+          }}
+          disabled={layoutLoading}
+          title="Auto-layout (gl)"
+          aria-label="Apply auto-layout"
+        >
+          {layoutLoading ? '...' : '📐'}
+        </button>
+        <button
+          className={`toolbar-button warmth-toggle ${warmthEnabled ? 'active' : ''}`}
+          onClick={toggleWarmth}
+          title="Toggle warmth visualization"
+          aria-label="Toggle warmth visualization"
+        >
+          {warmthEnabled ? '🔥' : '❄️'}
+        </button>
         <button
           className="tag-sidebar-toggle"
           onClick={() => setTagSidebarOpen(!tagSidebarOpen)}
@@ -547,7 +805,8 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
         isOpen={shareModalOpen}
         onClose={() => setShareModalOpen(false)}
       />
-    </div>
+      </div>
+    </EdgesProvider>
   );
 };
 

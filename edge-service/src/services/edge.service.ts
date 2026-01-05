@@ -6,8 +6,6 @@ export interface CreateEdgeInput {
   conceptMapId: string;
   sourceNodeId: string;
   targetNodeId: string;
-  sourceHandleId?: string;
-  targetHandleId?: string;
   label?: string;
   style?: any;
 }
@@ -39,13 +37,26 @@ export class EdgeService {
       conceptMapId: data.conceptMapId,
       sourceNodeId: data.sourceNodeId,
       targetNodeId: data.targetNodeId,
-      sourceHandleId: data.sourceHandleId,
-      targetHandleId: data.targetHandleId,
       label: data.label,
       style: data.style || {}
     });
 
     return await this.edgeRepository.save(edge);
+  }
+
+  async batchCreateEdges(edges: CreateEdgeInput[]): Promise<Edge[]> {
+    const edgeEntities = edges.map(data =>
+      this.edgeRepository.create({
+        ...(data.id && { id: data.id }),
+        conceptMapId: data.conceptMapId,
+        sourceNodeId: data.sourceNodeId,
+        targetNodeId: data.targetNodeId,
+        label: data.label,
+        style: data.style || {}
+      })
+    );
+
+    return await this.edgeRepository.save(edgeEntities);
   }
 
   async updateEdge(id: string, data: UpdateEdgeInput): Promise<Edge> {

@@ -59,6 +59,13 @@ interface ConceptMapStore {
   redo: () => void;
   canUndo: () => boolean;
   canRedo: () => boolean;
+
+  // Portal methods
+  createPortalNode: (targetMapId: string, targetNodeId: string, position: { x: number; y: number }) => Promise<ConceptMapNode>;
+  navigateThroughPortal: (portalNode: ConceptMapNode, onMapSwitch: (mapId: string, targetNodeId?: string) => void) => Promise<void>;
+
+  // Layout actions
+  autoLayout: (options?: { algorithm?: 'layered' | 'force' | 'mrtree'; direction?: 'DOWN' | 'UP' | 'LEFT' | 'RIGHT'; nodeSpacing?: number; layerSpacing?: number }) => Promise<void>;
 }
 
 export const useConceptMapStore = create<ConceptMapStore>((set, get) => ({
@@ -402,6 +409,105 @@ export const useConceptMapStore = create<ConceptMapStore>((set, get) => ({
 
   clearError: () => set({ error: null }),
 
+  // Portal methods
+  createPortalNode: async (
+    targetMapId: string,
+    targetNodeId: string,
+    position: { x: number; y: number }
+  ) => {
+    const { currentConceptMap, conceptMaps, saveHistory } = get();
+    if (!currentConceptMap) {
+      throw new Error('No concept map selected');
+    }
+
+    try {
+      // Get target map and node info
+      const targetMap = conceptMaps.find(m => m.id === targetMapId);
+      const targetNode = await nodeApi.getById(targetNodeId);
+
+      if (!targetMap || !targetNode) {
+        throw new Error('Target map or node not found');
+      }
+
+      // Save history before creating portal
+      saveHistory();
+
+      // Create portal node
+      const portalNode = await nodeApi.create({
+        conceptMapId: currentConceptMap.id,
+        title: `→ ${targetMap.name}: ${targetNode.title}`,
+        position,
+        nodeType: 'portal',
+        shape: 'portal',
+        portalTargetMapId: targetMapId,
+        portalTargetNodeId: targetNodeId,
+        content: {}
+      });
+
+      set((state) => ({
+        nodes: [...state.nodes, portalNode]
+      }));
+
+      return portalNode;
+    } catch (error: any) {
+      set({ error: error.message });
+      throw error;
+    }
+  },
+
+  navigateThroughPortal: async (
+    portalNode: ConceptMapNode,
+    onMapSwitch: (mapId: string, targetNodeId?: string) => void
+  ) => {
+    if (portalNode.nodeType !== 'portal' || !portalNode.portalTargetMapId) {
+      console.error('[PORTAL] Not a valid portal node');
+      return;
+    }
+
+    const { conceptMaps } = get();
+    const { portalTargetMapId, portalTargetNodeId, conceptMapId, id } = portalNode;
+
+    try {
+      // Check if return portal already exists in target map
+      const targetMapNodes = await nodeApi.getByConceptMapId(portalTargetMapId);
+      const existingReturnPortal = targetMapNodes.find(n =>
+        n.nodeType === 'portal' &&
+        n.portalTargetMapId === conceptMapId &&
+        n.portalTargetNodeId === id
+      );
+
+      // If no return portal exists, create one
+      if (!existingReturnPortal && portalTargetNodeId) {
+        const targetNode = await nodeApi.getById(portalTargetNodeId);
+        const sourceMap = conceptMaps.find(m => m.id === conceptMapId);
+
+        if (targetNode && sourceMap) {
+          await nodeApi.create({
+            conceptMapId: portalTargetMapId,
+            title: `← ${sourceMap.name}: ${portalNode.title.replace('→ ', '')}`,
+            position: {
+              x: targetNode.position.x + 200,
+              y: targetNode.position.y
+            },
+            nodeType: 'portal',
+            shape: 'portal',
+            portalTargetMapId: conceptMapId,
+            portalTargetNodeId: id,
+            portalSourceMapId: conceptMapId,
+            portalSourceNodeId: id,
+            content: {}
+          });
+        }
+      }
+
+      // Trigger map switch via callback
+      onMapSwitch(portalTargetMapId, portalTargetNodeId);
+    } catch (error: any) {
+      console.error('[PORTAL] Failed to navigate:', error);
+      set({ error: error.message });
+    }
+  },
+
   // Undo/Redo implementation
   saveHistory: () => {
     const state = get();
@@ -693,5 +799,40 @@ export const useConceptMapStore = create<ConceptMapStore>((set, get) => ({
   canRedo: () => {
     const state = get();
     return state.historyIndex < state.history.length - 1;
+  },
+
+  // Auto-layout using ELKjs
+  autoLayout: async (options = {}) => {
+    const { currentConceptMap, saveHistory } = get();
+    if (!currentConceptMap) {
+      console.error('[LAYOUT] No concept map selected');
+      return;
+    }
+
+    try {
+      // Save history before applying layout
+      saveHistory();
+
+      console.log('[LAYOUT] Applying auto-layout to map:', currentConceptMap.id, options);
+
+      const result = await conceptMapApi.applyLayout(currentConceptMap.id, options);
+
+      if (result.nodes) {
+        // Update local nodes with new positions
+        set((state) => ({
+          nodes: state.nodes.map((node) => {
+            const updatedNode = result.nodes.find((n: ConceptMapNode) => n.id === node.id);
+            if (updatedNode) {
+              return { ...node, position: updatedNode.position };
+            }
+            return node;
+          })
+        }));
+        console.log('[LAYOUT] Updated', result.nodes.length, 'node positions');
+      }
+    } catch (error: any) {
+      console.error('[LAYOUT] Failed to apply layout:', error);
+      set({ error: error.message || 'Failed to apply layout' });
+    }
   }
 }));

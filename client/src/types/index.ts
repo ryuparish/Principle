@@ -32,6 +32,12 @@ export interface ConceptMapNode {
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
+  // Portal-specific fields
+  nodeType: 'regular' | 'portal';
+  portalTargetMapId?: string;
+  portalTargetNodeId?: string;
+  portalSourceMapId?: string;
+  portalSourceNodeId?: string;
 }
 
 export interface CreateConceptMapInput {
@@ -46,6 +52,11 @@ export interface CreateNodeInput {
   content?: any;
   style?: any;
   shape?: string;
+  nodeType?: 'regular' | 'portal';
+  portalTargetMapId?: string;
+  portalTargetNodeId?: string;
+  portalSourceMapId?: string;
+  portalSourceNodeId?: string;
 }
 
 export interface UpdateNodeInput {
@@ -61,7 +72,10 @@ export interface EdgeStyle {
   strokeWidth?: number;
   strokeDasharray?: string;
   animated?: boolean;
-  type?: 'default' | 'straight' | 'step' | 'smoothstep';
+  type?: 'default' | 'straight' | 'step' | 'smoothstep' | 'direct';
+  markerEnd?: 'arrow' | 'arrowclosed' | 'none';
+  markerStart?: 'arrow' | 'arrowclosed' | 'none';
+  edgeType?: string; // Preset ID
 }
 
 export interface ConceptMapEdge {
@@ -91,6 +105,73 @@ export interface UpdateEdgeInput {
   label?: string;
   style?: EdgeStyle;
 }
+
+export interface EdgeTypePreset {
+  id: string;
+  name: string;
+  description: string;
+  style: EdgeStyle;
+}
+
+export const EDGE_TYPE_PRESETS: EdgeTypePreset[] = [
+  {
+    id: 'default',
+    name: 'Default',
+    description: 'Neutral connection',
+    style: { strokeColor: '#b1b1b7', strokeWidth: 2, markerEnd: 'arrow' }
+  },
+  {
+    id: 'causes',
+    name: 'Causes',
+    description: 'Causal relationship',
+    style: { strokeColor: '#ef4444', strokeWidth: 2, markerEnd: 'arrowclosed' }
+  },
+  {
+    id: 'supports',
+    name: 'Supports',
+    description: 'Supportive relationship',
+    style: { strokeColor: '#22c55e', strokeWidth: 2, markerEnd: 'arrowclosed' }
+  },
+  {
+    id: 'contradicts',
+    name: 'Contradicts',
+    description: 'Contradictory relationship',
+    style: { strokeColor: '#f59e0b', strokeWidth: 2, strokeDasharray: '5 5', markerEnd: 'arrowclosed' }
+  },
+  {
+    id: 'influences',
+    name: 'Influences',
+    description: 'Indirect influence',
+    style: { strokeColor: '#3b82f6', strokeWidth: 2, strokeDasharray: '3 3', markerEnd: 'arrow' }
+  },
+  {
+    id: 'bidirectional',
+    name: 'Bidirectional',
+    description: 'Mutual relationship',
+    style: { strokeColor: '#8b5cf6', strokeWidth: 2, markerEnd: 'arrowclosed', markerStart: 'arrowclosed' }
+  },
+  {
+    id: 'relates',
+    name: 'Relates',
+    description: 'General relationship',
+    style: { strokeColor: '#64748b', strokeWidth: 2, markerEnd: 'none' }
+  }
+];
+
+// Edge path style options (controls the line shape)
+export interface EdgePathStyle {
+  id: 'default' | 'straight' | 'step' | 'smoothstep' | 'direct';
+  name: string;
+  description: string;
+}
+
+export const EDGE_PATH_STYLES: EdgePathStyle[] = [
+  { id: 'default', name: 'Curved', description: 'Smooth bezier curve' },
+  { id: 'step', name: 'Square', description: 'Right-angle orthogonal path' },
+  { id: 'smoothstep', name: 'Rounded', description: 'Orthogonal with rounded corners' },
+  { id: 'straight', name: 'Straight', description: 'Straight with edge spreading' },
+  { id: 'direct', name: 'Direct', description: 'Absolute straight line, no spreading' }
+];
 
 export interface Media {
   id: string;

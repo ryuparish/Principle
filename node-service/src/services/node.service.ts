@@ -61,14 +61,41 @@ export class NodeService {
     return await this.nodeRepository.save(node);
   }
 
+  async batchCreateNodes(nodes: CreateNodeInput[]): Promise<Node[]> {
+    const nodeEntities = nodes.map(data =>
+      this.nodeRepository.create({
+        ...(data.id && { id: data.id }),
+        conceptMapId: data.conceptMapId,
+        title: data.title,
+        content: data.content || {},
+        position: data.position,
+        style: data.style || {},
+        shape: data.shape || 'rounded-rectangle'
+      })
+    );
+
+    return await this.nodeRepository.save(nodeEntities);
+  }
+
   async updateNode(id: string, data: UpdateNodeInput): Promise<Node> {
     const updateData: any = {};
     if (data.title !== undefined) updateData.title = data.title;
-    if (data.content !== undefined) updateData.content = data.content;
-    if (data.position !== undefined) updateData.position = data.position;
-    if (data.style !== undefined) updateData.style = data.style;
-    if (data.imageIds !== undefined) updateData.imageIds = data.imageIds;
-    if (data.tags !== undefined) updateData.tags = data.tags;
+    // TypeORM's update() bypasses transformers, so we must stringify JSON fields manually
+    if (data.content !== undefined) {
+      updateData.content = typeof data.content === 'string' ? data.content : JSON.stringify(data.content);
+    }
+    if (data.position !== undefined) {
+      updateData.position = typeof data.position === 'string' ? data.position : JSON.stringify(data.position);
+    }
+    if (data.style !== undefined) {
+      updateData.style = typeof data.style === 'string' ? data.style : JSON.stringify(data.style);
+    }
+    if (data.imageIds !== undefined) {
+      updateData.imageIds = typeof data.imageIds === 'string' ? data.imageIds : JSON.stringify(data.imageIds);
+    }
+    if (data.tags !== undefined) {
+      updateData.tags = typeof data.tags === 'string' ? data.tags : JSON.stringify(data.tags);
+    }
     if (data.shape !== undefined) updateData.shape = data.shape;
 
     await this.nodeRepository.update({ id }, updateData);

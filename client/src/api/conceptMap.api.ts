@@ -1,5 +1,16 @@
 import { apiClient } from './client';
-import { ConceptMap, CreateConceptMapInput } from '../types';
+import { ConceptMap, ConceptMapNode, CreateConceptMapInput } from '../types';
+
+export interface LayoutOptions {
+  algorithm?: 'layered' | 'force' | 'mrtree';
+  direction?: 'DOWN' | 'UP' | 'LEFT' | 'RIGHT';
+  nodeSpacing?: number;
+  layerSpacing?: number;
+}
+
+export interface LayoutResult {
+  nodes: ConceptMapNode[];
+}
 
 export const conceptMapApi = {
   getAll: async (): Promise<ConceptMap[]> => {
@@ -24,5 +35,10 @@ export const conceptMapApi = {
 
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/mindmaps/${id}`);
+  },
+
+  applyLayout: async (id: string, options?: LayoutOptions): Promise<LayoutResult> => {
+    const response = await apiClient.post(`/mindmaps/${id}/layout`, options || {});
+    return response.data;
   }
 };

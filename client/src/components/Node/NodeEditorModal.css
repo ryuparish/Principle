@@ -37,11 +37,34 @@
 
 .modal-header {
   display: flex;
+  flex-direction: column;
+  padding: 16px 24px 8px;
+  gap: 8px;
+}
+
+.header-row {
+  display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e0e0e0;
-  gap: 16px;
+  gap: 12px;
+}
+
+.header-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-tags {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.header-tags::-webkit-scrollbar {
+  display: none;
 }
 
 .node-title-input {
@@ -65,12 +88,6 @@
 .node-title-input:focus {
   background: white;
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
-}
-
-.modal-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
 }
 
 .save-message {
@@ -138,10 +155,19 @@
 .modal-body {
   flex: 1;
   overflow: auto;
-  padding: 16px 24px;
+  padding: 8px 24px 16px;
   min-height: 500px;
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+/* Attachments panel */
+.attachments-panel {
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
 }
 
 .modal-footer {
@@ -191,54 +217,3 @@
   transform: scale(0.98);
 }
 
-.metadata-row {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e0e0e0;
-  display: flex;
-  align-items: flex-start;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.tags-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 200px;
-}
-
-.tags-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  white-space: nowrap;
-}
-
-.shape-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.shape-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  white-space: nowrap;
-}
-
-.images-section {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.images-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  white-space: nowrap;
-}

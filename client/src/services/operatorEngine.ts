@@ -132,67 +132,178 @@ export const executeYank = (
   };
 };
 
+// Calculate positions based on shape type
+const calculateShapePositions = (
+  count: number,
+  baseOffset: { x: number; y: number },
+  shape: 'grid' | 'tree' | 'line' | 'radial' | 'cluster'
+): Array<{ x: number; y: number }> => {
+  const positions: Array<{ x: number; y: number }> = [];
+  const spacing = 150;
+
+  switch (shape) {
+    case 'grid': {
+      // Standard grid layout
+      const cols = Math.ceil(Math.sqrt(count));
+      const rows = Math.ceil(count / cols);
+
+      for (let i = 0; i < count; i++) {
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        positions.push({
+          x: baseOffset.x + col * spacing,
+          y: baseOffset.y + row * spacing
+        });
+      }
+      break;
+    }
+
+    case 'tree': {
+      // Hierarchical tree layout (binary-ish tree)
+      let currentLevel = 0;
+      let nodesInLevel = 1;
+      let nodeIndex = 0;
+
+      for (let i = 0; i < count; i++) {
+        const positionInLevel = nodeIndex % nodesInLevel;
+        const levelWidth = nodesInLevel * spacing;
+        const startX = baseOffset.x - levelWidth / 2;
+
+        positions.push({
+          x: startX + positionInLevel * spacing + spacing / 2,
+          y: baseOffset.y + currentLevel * spacing
+        });
+
+        nodeIndex++;
+        if (nodeIndex >= nodesInLevel) {
+          currentLevel++;
+          nodesInLevel *= 2;
+          nodeIndex = 0;
+        }
+      }
+      break;
+    }
+
+    case 'line': {
+      // Horizontal line for sequences
+      for (let i = 0; i < count; i++) {
+        positions.push({
+          x: baseOffset.x + i * spacing,
+          y: baseOffset.y
+        });
+      }
+      break;
+    }
+
+    case 'radial': {
+      // Radial pattern from center (like spokes)
+      const radius = spacing * 1.5;
+      const angleStep = (2 * Math.PI) / count;
+
+      for (let i = 0; i < count; i++) {
+        const angle = i * angleStep - Math.PI / 2; // Start at top
+        positions.push({
+          x: baseOffset.x + Math.cos(angle) * radius,
+          y: baseOffset.y + Math.sin(angle) * radius
+        });
+      }
+      break;
+    }
+
+    case 'cluster': {
+      // Cluster around center with slight random offset
+      const clusterRadius = spacing * 0.8;
+
+      for (let i = 0; i < count; i++) {
+        const angle = (i / count) * 2 * Math.PI;
+        const radius = clusterRadius * (0.5 + Math.random() * 0.5);
+        positions.push({
+          x: baseOffset.x + Math.cos(angle) * radius,
+          y: baseOffset.y + Math.sin(angle) * radius
+        });
+      }
+      break;
+    }
+
+    default:
+      // Fallback to grid
+      return calculateShapePositions(count, baseOffset, 'grid');
+  }
+
+  return positions;
+};
+
 // Execute paste operation
 export const executePaste = async (
   yankRegister: { nodes: ConceptMapNode[]; edges: ConceptMapEdge[] },
   focusedNodeId: string | null,
   pasteAsConnected: boolean,
+  count: number,
+  shape: 'grid' | 'tree' | 'line' | 'radial' | 'cluster',
   createNodeFn: (title: string, position: { x: number; y: number }) => Promise<ConceptMapNode>,
   createEdgeFn: (sourceNodeId: string, targetNodeId: string, label?: string) => Promise<ConceptMapEdge>
 ): Promise<string[]> => {
-  const createdNodeIds: string[] = [];
-  const oldToNewIdMap = new Map<string, string>();
+  const allCreatedNodeIds: string[] = [];
 
   if (yankRegister.nodes.length === 0) {
-    return createdNodeIds;
+    return allCreatedNodeIds;
   }
 
-  // Calculate offset for pasted nodes
-  const offset = { x: 100, y: 100 };
+  // Calculate base offset
+  const baseOffset = { x: 100, y: 100 };
 
-  // If pasting as connected, offset from focused node
-  // Otherwise, just offset from original positions
+  // Calculate positions for multiple pastes based on shape
+  const shapePositions = calculateShapePositions(count, baseOffset, shape);
 
-  // Create nodes
-  for (const node of yankRegister.nodes) {
-    try {
-      const newPosition = {
-        x: node.position.x + offset.x,
-        y: node.position.y + offset.y
-      };
+  // Paste multiple copies
+  for (let copyIndex = 0; copyIndex < count; copyIndex++) {
+    const copyOffset = shapePositions[copyIndex];
+    const oldToNewIdMap = new Map<string, string>();
+    const createdNodeIds: string[] = [];
 
-      const newNode = await createNodeFn(node.title, newPosition);
-      oldToNewIdMap.set(node.id, newNode.id);
-      createdNodeIds.push(newNode.id);
-
-      // TODO: Copy content, style, tags, etc. in a future update
-    } catch (error) {
-      console.error(`Failed to paste node ${node.title}:`, error);
-    }
-  }
-
-  // Create edges between pasted nodes
-  for (const edge of yankRegister.edges) {
-    const newSourceId = oldToNewIdMap.get(edge.sourceNodeId);
-    const newTargetId = oldToNewIdMap.get(edge.targetNodeId);
-
-    if (newSourceId && newTargetId) {
+    // Create nodes for this copy
+    for (const node of yankRegister.nodes) {
       try {
-        await createEdgeFn(newSourceId, newTargetId, edge.label);
+        const newPosition = {
+          x: node.position.x + copyOffset.x,
+          y: node.position.y + copyOffset.y
+        };
+
+        const newNode = await createNodeFn(node.title, newPosition);
+        oldToNewIdMap.set(node.id, newNode.id);
+        createdNodeIds.push(newNode.id);
+
+        // TODO: Copy content, style, tags, etc. in a future update
       } catch (error) {
-        console.error('Failed to paste edge:', error);
+        console.error(`Failed to paste node ${node.title}:`, error);
       }
     }
-  }
 
-  // If pasting as connected (P), create edge from focused node to first pasted node
-  if (pasteAsConnected && focusedNodeId && createdNodeIds.length > 0) {
-    try {
-      await createEdgeFn(focusedNodeId, createdNodeIds[0]);
-    } catch (error) {
-      console.error('Failed to create connecting edge:', error);
+    // Create edges between pasted nodes in this copy
+    for (const edge of yankRegister.edges) {
+      const newSourceId = oldToNewIdMap.get(edge.sourceNodeId);
+      const newTargetId = oldToNewIdMap.get(edge.targetNodeId);
+
+      if (newSourceId && newTargetId) {
+        try {
+          await createEdgeFn(newSourceId, newTargetId, edge.label);
+        } catch (error) {
+          console.error('Failed to paste edge:', error);
+        }
+      }
     }
+
+    // If pasting as connected (P), create edge from focused node to first pasted node of first copy
+    if (pasteAsConnected && focusedNodeId && copyIndex === 0 && createdNodeIds.length > 0) {
+      try {
+        await createEdgeFn(focusedNodeId, createdNodeIds[0]);
+      } catch (error) {
+        console.error('Failed to create connecting edge:', error);
+      }
+    }
+
+    allCreatedNodeIds.push(...createdNodeIds);
   }
 
-  return createdNodeIds;
+  return allCreatedNodeIds;
 };

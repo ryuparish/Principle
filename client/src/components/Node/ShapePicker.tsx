@@ -42,7 +42,9 @@ export const ShapePicker: React.FC<ShapePickerProps> = ({
     setIsOpen(false);
   };
 
-  const currentConfig = SHAPE_CONFIGS[currentShape];
+  // Fallback to rounded-rectangle for invalid shapes (e.g., legacy "ellipse" data)
+  const currentConfig = SHAPE_CONFIGS[currentShape] || SHAPE_CONFIGS['rounded-rectangle'];
+  const validCurrentShape = SHAPE_CONFIGS[currentShape] ? currentShape : 'rounded-rectangle';
 
   return (
     <div className="shape-picker" ref={dropdownRef}>
@@ -69,7 +71,7 @@ export const ShapePicker: React.FC<ShapePickerProps> = ({
                 return (
                   <button
                     key={key}
-                    className={`shape-picker-item ${currentShape === key ? 'active' : ''}`}
+                    className={`shape-picker-item ${validCurrentShape === key ? 'active' : ''}`}
                     onClick={() => handleShapeClick(key)}
                   >
                     <div className="shape-picker-preview">
@@ -88,7 +90,7 @@ export const ShapePicker: React.FC<ShapePickerProps> = ({
                       <div className="shape-picker-name">{config.name}</div>
                       <div className="shape-picker-description">{config.description}</div>
                     </div>
-                    {currentShape === key && (
+                    {validCurrentShape === key && (
                       <span className="shape-picker-check">✓</span>
                     )}
                   </button>

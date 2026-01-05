@@ -10,6 +10,7 @@ import {
   executeYank,
   executePaste
 } from '../services/operatorEngine';
+import { findNearestNode } from '../services/navigationEngine';
 import { getClosestHandles } from '../utils/handleGeometry';
 
 /**
@@ -48,9 +49,21 @@ export const useVimOperations = () => {
     // Execute delete (passes saveHistory to ensure it's called BEFORE any deletions)
     await executeDelete(nodes, edges, deleteNodes, deleteEdgeWithoutHistory, saveHistory);
 
-    // Clear focus if focused node was deleted
+    // Focus nearest node if focused node was deleted
     if (vim.state.focusedNodeId && nodes.some(n => n.id === vim.state.focusedNodeId)) {
-      vim.setFocus(null);
+      const deletedNode = nodes.find(n => n.id === vim.state.focusedNodeId);
+
+      if (deletedNode) {
+        // Get remaining nodes (all nodes except deleted ones)
+        const deletedIds = new Set(nodes.map(n => n.id));
+        const remainingNodes = storeNodes.filter(n => !deletedIds.has(n.id));
+
+        // Find and focus nearest node
+        const nearestId = findNearestNode(deletedNode.position, remainingNodes);
+        vim.setFocus(nearestId);
+      } else {
+        vim.setFocus(null);
+      }
     }
 
     // Clear selection
@@ -77,7 +90,7 @@ export const useVimOperations = () => {
   }, [vim, storeNodes, storeEdges]);
 
   // Paste operation
-  const pasteOperation = useCallback(async (pasteAsConnected: boolean = false) => {
+  const pasteOperation = useCallback(async (pasteAsConnected: boolean = false, count: number = 1, shape: string = 'grid') => {
     if (vim.state.yankRegister.nodes.length === 0) {
       return;
     }
@@ -86,6 +99,8 @@ export const useVimOperations = () => {
       vim.state.yankRegister,
       vim.state.focusedNodeId,
       pasteAsConnected,
+      count,
+      shape as any,
       createNode,
       createEdge
     );

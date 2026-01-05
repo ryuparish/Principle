@@ -79,6 +79,9 @@ export class MediaController {
 
   async getByIds(req: Request, res: Response) {
     try {
+      console.log('[CONTROLLER] GET /bulk called');
+      console.log('[CONTROLLER] Query params:', req.query);
+
       const { ids } = req.query;
 
       if (!ids || typeof ids !== 'string') {
@@ -87,6 +90,8 @@ export class MediaController {
 
       const idArray = ids.split(',');
       const media = await mediaService.getMediaByIds(idArray);
+
+      console.log('[CONTROLLER] Returning media count:', media.length);
       res.json({ media });
     } catch (error) {
       console.error('Error fetching media:', error);
@@ -108,6 +113,9 @@ export class MediaController {
 
   async importLocal(req: Request, res: Response) {
     try {
+      console.log('[CONTROLLER] POST /import-local called');
+      console.log('[CONTROLLER] Request body:', req.body);
+
       const { id, sourceFilename, sourceThumbnail, originalName, mimeType, width, height } = req.body;
 
       if (!id || !sourceFilename || !originalName || !mimeType) {
@@ -124,8 +132,11 @@ export class MediaController {
         height
       });
 
+      console.log('[CONTROLLER] Successfully imported media:', media.id);
       res.status(201).json(media);
     } catch (error: any) {
+      console.error('[CONTROLLER] Error importing media:', error.message);
+      console.error('[CONTROLLER] Stack trace:', error.stack);
       console.error('Error importing local media:', error);
       res.status(error.statusCode || 500).json({
         error: error.message || 'Failed to import media'
@@ -209,6 +220,22 @@ export class MediaController {
       res.status(error.statusCode || 500).json({
         error: error.message || 'Failed to migrate to local'
       });
+    }
+  }
+
+  async update(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { nodeId } = req.body;
+
+      const media = await mediaService.updateMedia(id, { nodeId });
+      res.json(media);
+    } catch (error: any) {
+      if (error.message === 'Media not found after update') {
+        return res.status(404).json({ error: 'Media not found' });
+      }
+      console.error('Error updating media:', error);
+      res.status(500).json({ error: 'Failed to update media' });
     }
   }
 

@@ -16,12 +16,20 @@ export class StorageService {
     const thumbnailFilename = `${nameWithoutExt}-thumb${ext}`;
     const thumbnailPath = path.join(this.uploadsDir, thumbnailFilename);
 
+    console.log('[STORAGE] generateThumbnail called');
+    console.log('[STORAGE] Input filename:', filename);
+    console.log('[STORAGE] Thumbnail filename:', thumbnailFilename);
+    console.log('[STORAGE] Original path:', originalPath);
+    console.log('[STORAGE] Thumbnail path:', thumbnailPath);
+
     await sharp(originalPath)
       .resize(200, 200, {
         fit: 'cover',
         position: 'center'
       })
       .toFile(thumbnailPath);
+
+    console.log('[STORAGE] Successfully generated thumbnail:', thumbnailFilename);
 
     return thumbnailFilename;
   }

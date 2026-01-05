@@ -20,17 +20,19 @@ export class ConceptMapService {
   private conceptMapRepository = AppDataSource.getRepository(ConceptMap);
 
   async getAllConceptMaps(): Promise<ConceptMap[]> {
-    return await this.conceptMapRepository.find({
-      relations: ['nodes'],
-      order: { updatedAt: 'DESC' }
-    });
+    return await this.conceptMapRepository
+      .createQueryBuilder('conceptMap')
+      .leftJoinAndSelect('conceptMap.nodes', 'node', 'node.isDeleted = :isDeleted', { isDeleted: false })
+      .orderBy('conceptMap.updatedAt', 'DESC')
+      .getMany();
   }
 
   async getConceptMapById(id: string): Promise<ConceptMap | null> {
-    return await this.conceptMapRepository.findOne({
-      where: { id },
-      relations: ['nodes']
-    });
+    return await this.conceptMapRepository
+      .createQueryBuilder('conceptMap')
+      .leftJoinAndSelect('conceptMap.nodes', 'node', 'node.isDeleted = :isDeleted', { isDeleted: false })
+      .where('conceptMap.id = :id', { id })
+      .getOne();
   }
 
   async createConceptMap(data: CreateConceptMapInput): Promise<ConceptMap> {

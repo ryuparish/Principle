@@ -147,3 +147,71 @@
   transform: scale(1.1);
   transition: transform 0.2s ease;
 }
+
+/* ========================================
+   Warmth Feature - Lamport Clock Visualization
+   Hot nodes glow blue, cold nodes look normal
+   ======================================== */
+
+/* Transition for smooth warmth changes when feature is enabled */
+.warmth-enabled .custom-node {
+  transition: box-shadow 0.4s ease, all 0.15s ease;
+}
+
+/* Warmth levels - blue glow based on recency */
+/* Level 0: Coldest (never opened or very old) - completely normal */
+.warmth-enabled .custom-node.warmth-0 {
+  /* No glow - normal appearance */
+}
+
+.warmth-enabled .custom-node.warmth-1 {
+  box-shadow: 0 0 4px 1px rgba(59, 130, 246, 0.15),
+              0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.warmth-enabled .custom-node.warmth-2 {
+  box-shadow: 0 0 6px 2px rgba(59, 130, 246, 0.2),
+              0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.warmth-enabled .custom-node.warmth-3 {
+  box-shadow: 0 0 8px 2px rgba(59, 130, 246, 0.25),
+              0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.warmth-enabled .custom-node.warmth-4 {
+  box-shadow: 0 0 10px 3px rgba(59, 130, 246, 0.3),
+              0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.warmth-enabled .custom-node.warmth-5 {
+  box-shadow: 0 0 12px 4px rgba(59, 130, 246, 0.35),
+              0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.warmth-enabled .custom-node.warmth-6 {
+  box-shadow: 0 0 14px 4px rgba(59, 130, 246, 0.4),
+              0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.warmth-enabled .custom-node.warmth-7 {
+  box-shadow: 0 0 16px 5px rgba(59, 130, 246, 0.5),
+              0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.warmth-enabled .custom-node.warmth-8 {
+  box-shadow: 0 0 18px 6px rgba(59, 130, 246, 0.6),
+              0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.warmth-enabled .custom-node.warmth-9 {
+  box-shadow: 0 0 20px 6px rgba(59, 130, 246, 0.7),
+              0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Level 10: Hottest (just opened) - maximum blue glow */
+.warmth-enabled .custom-node.warmth-10 {
+  box-shadow: 0 0 24px 8px rgba(59, 130, 246, 0.8),
+              0 0 40px 12px rgba(59, 130, 246, 0.4),
+              0 2px 8px rgba(0, 0, 0, 0.1);
+}

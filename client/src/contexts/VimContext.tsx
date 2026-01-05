@@ -77,9 +77,25 @@ interface VimContextValue {
   openEdgeLabelEditor: (edgeId: string) => void;
   closeEdgeLabelEditor: () => void;
 
+  // Edge type selector
+  openEdgeTypeSelector: (edgeId: string) => void;
+  closeEdgeTypeSelector: () => void;
+
   // Tag input
   openTagInput: () => void;
   closeTagInput: () => void;
+
+  // Paste shape selector
+  openPasteShapeSelector: (count: number, asConnected: boolean) => void;
+  closePasteShapeSelector: () => void;
+
+  // Portal creator
+  openPortalCreator: () => void;
+  closePortalCreator: () => void;
+
+  // Layout options selector
+  openLayoutOptionsSelector: () => void;
+  closeLayoutOptionsSelector: () => void;
 
   // Settings
   toggleEnabled: () => void;
@@ -176,9 +192,25 @@ export const VimProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const openEdgeLabelEditor = useCallback((edgeId: string) => dispatch({ type: 'OPEN_EDGE_LABEL_EDITOR', edgeId }), []);
   const closeEdgeLabelEditor = useCallback(() => dispatch({ type: 'CLOSE_EDGE_LABEL_EDITOR' }), []);
 
+  // Edge type selector
+  const openEdgeTypeSelector = useCallback((edgeId: string) => dispatch({ type: 'OPEN_EDGE_TYPE_SELECTOR', edgeId }), []);
+  const closeEdgeTypeSelector = useCallback(() => dispatch({ type: 'CLOSE_EDGE_TYPE_SELECTOR' }), []);
+
   // Tag input
   const openTagInput = useCallback(() => dispatch({ type: 'OPEN_TAG_INPUT' }), []);
   const closeTagInput = useCallback(() => dispatch({ type: 'CLOSE_TAG_INPUT' }), []);
+
+  // Paste shape selector
+  const openPasteShapeSelector = useCallback((count: number, asConnected: boolean) => dispatch({ type: 'OPEN_PASTE_SHAPE_SELECTOR', count, asConnected }), []);
+  const closePasteShapeSelector = useCallback(() => dispatch({ type: 'CLOSE_PASTE_SHAPE_SELECTOR' }), []);
+
+  // Portal creator
+  const openPortalCreator = useCallback(() => dispatch({ type: 'OPEN_PORTAL_CREATOR' }), []);
+  const closePortalCreator = useCallback(() => dispatch({ type: 'CLOSE_PORTAL_CREATOR' }), []);
+
+  // Layout options selector
+  const openLayoutOptionsSelector = useCallback(() => dispatch({ type: 'OPEN_LAYOUT_OPTIONS_SELECTOR' }), []);
+  const closeLayoutOptionsSelector = useCallback(() => dispatch({ type: 'CLOSE_LAYOUT_OPTIONS_SELECTOR' }), []);
 
   // Settings
   const toggleEnabled = useCallback(() => dispatch({ type: 'TOGGLE_ENABLED' }), []);
@@ -229,8 +261,16 @@ export const VimProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     closeEditor,
     openEdgeLabelEditor,
     closeEdgeLabelEditor,
+    openEdgeTypeSelector,
+    closeEdgeTypeSelector,
     openTagInput,
     closeTagInput,
+    openPasteShapeSelector,
+    closePasteShapeSelector,
+    openPortalCreator,
+    closePortalCreator,
+    openLayoutOptionsSelector,
+    closeLayoutOptionsSelector,
     toggleEnabled,
     reset
   }), [
@@ -276,8 +316,16 @@ export const VimProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     closeEditor,
     openEdgeLabelEditor,
     closeEdgeLabelEditor,
+    openEdgeTypeSelector,
+    closeEdgeTypeSelector,
     openTagInput,
     closeTagInput,
+    openPasteShapeSelector,
+    closePasteShapeSelector,
+    openPortalCreator,
+    closePortalCreator,
+    openLayoutOptionsSelector,
+    closeLayoutOptionsSelector,
     toggleEnabled,
     reset
   ]);

@@ -9,6 +9,8 @@ import edgeRoutes from './routes/edge.routes';
 import queueRoutes from './routes/queue.routes';
 import mediaRoutes from './routes/media.routes';
 import shareRoutes from './routes/share.routes';
+import authRoutes from './routes/auth.routes';
+import driveRoutes from './routes/drive.routes';
 import { services } from './config/services.config';
 import { shareLimiter } from './middleware/rateLimiter';
 
@@ -43,7 +45,9 @@ app.get('/', (req: Request, res: Response) => {
       edges: '/api/edges',
       queue: '/api/queue',
       media: '/api/media',
-      share: '/api/share'
+      share: '/api/share',
+      auth: '/api/auth',
+      drive: '/api/drive'
     }
   });
 });
@@ -56,6 +60,8 @@ app.use('/api/queue', queueRoutes);
 app.use('/api/media', mediaRoutes);
 // Apply rate limiting to share endpoints (100 req/min per IP)
 app.use('/api/share', shareLimiter, shareRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/drive', driveRoutes);
 
 // Check service health on startup
 async function checkServicesHealth() {

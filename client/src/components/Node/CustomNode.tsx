@@ -8,6 +8,7 @@ import { useVim } from '../../contexts/VimContext';
 import { useConceptMapStore } from "../../store/conceptMapStore";
 import { TagChip } from '../Tags/TagChip';
 import { useTagStore } from '../../store/tagStore';
+import { useWarmthStore } from '../../store/warmthStore';
 import { mediaApi } from '../../api/media.api';
 import './CustomNode.css';
 import './NodeShapes.css';
@@ -25,6 +26,11 @@ const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, isConnectable, 
   const vim = useVim();
   const { updateNode } = useConceptMapStore();
   const { toggleTagFilter } = useTagStore();
+  const { enabled: warmthEnabled, getWarmth } = useWarmthStore();
+
+  // Calculate warmth level (0-10) for CSS class
+  const warmth = warmthEnabled ? getWarmth(id) : 1;
+  const warmthLevel = Math.round(warmth * 10);
 
   // Load media for this node if it has images
   const nodeMedia = useConceptMapStore((state) => state.media[id] || []);
@@ -200,7 +206,7 @@ const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, isConnectable, 
   return (
     <>
       <div
-        className={`custom-node ${shapeConfig.cssClass || ''} ${isFocused ? 'focused' : ''} ${isInInsertMode ? 'insert-mode' : ''}`}
+        className={`custom-node ${shapeConfig.cssClass || ''} ${isFocused ? 'focused' : ''} ${isInInsertMode ? 'insert-mode' : ''} ${warmthEnabled ? `warmth-${warmthLevel}` : ''}`}
         onClick={handleNodeClick}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}

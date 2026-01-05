@@ -294,11 +294,45 @@ export const vimStateReducer = (state: VimState, action: VimAction): VimState =>
     case 'CLOSE_EDGE_LABEL_EDITOR':
       return { ...state, edgeLabelEditorId: null };
 
+    case 'OPEN_EDGE_TYPE_SELECTOR':
+      return { ...state, edgeTypeSelectorId: action.edgeId };
+
+    case 'CLOSE_EDGE_TYPE_SELECTOR':
+      return { ...state, edgeTypeSelectorId: null };
+
     case 'OPEN_TAG_INPUT':
       return { ...state, tagInputOpen: true };
 
     case 'CLOSE_TAG_INPUT':
       return { ...state, tagInputOpen: false };
+
+    case 'OPEN_PASTE_SHAPE_SELECTOR':
+      return {
+        ...state,
+        pasteShapeSelectorOpen: true,
+        pasteCount: action.count,
+        pasteAsConnected: action.asConnected
+      };
+
+    case 'CLOSE_PASTE_SHAPE_SELECTOR':
+      return {
+        ...state,
+        pasteShapeSelectorOpen: false,
+        pasteCount: 1,
+        pasteAsConnected: false
+      };
+
+    case 'OPEN_PORTAL_CREATOR':
+      return { ...state, portalCreatorOpen: true };
+
+    case 'CLOSE_PORTAL_CREATOR':
+      return { ...state, portalCreatorOpen: false };
+
+    case 'OPEN_LAYOUT_OPTIONS_SELECTOR':
+      return { ...state, layoutOptionsSelectorOpen: true };
+
+    case 'CLOSE_LAYOUT_OPTIONS_SELECTOR':
+      return { ...state, layoutOptionsSelectorOpen: false };
 
     case 'TOGGLE_ENABLED':
       return { ...state, enabled: !state.enabled };

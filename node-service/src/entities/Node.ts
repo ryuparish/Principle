@@ -72,6 +72,22 @@ export class Node {
   @Column('text', { default: 'rounded-rectangle' })
   shape!: string;
 
+  // Portal-specific fields
+  @Column('text', { name: 'node_type', default: 'regular' })
+  nodeType!: 'regular' | 'portal';
+
+  @Column('text', { name: 'portal_target_map_id', nullable: true })
+  portalTargetMapId?: string;
+
+  @Column('text', { name: 'portal_target_node_id', nullable: true })
+  portalTargetNodeId?: string;
+
+  @Column('text', { name: 'portal_source_map_id', nullable: true })
+  portalSourceMapId?: string;
+
+  @Column('text', { name: 'portal_source_node_id', nullable: true })
+  portalSourceNodeId?: string;
+
   @Column('boolean', { default: false })
   isDeleted!: boolean;
 

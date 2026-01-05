@@ -131,6 +131,65 @@ export class ShareService {
   }
 
   /**
+   * Export concept map by ID (for direct export without sharing)
+   * Returns JSON export format
+   */
+  async exportMapById(mapId: string): Promise<ConceptMapExport> {
+    const map = await this.conceptMapRepository.findOne({
+      where: { id: mapId },
+      relations: ['nodes']
+    });
+
+    if (!map) {
+      const error: any = new Error('Map not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Filter out soft-deleted nodes
+    const activeNodes = map.nodes.filter(n => !n.isDeleted);
+
+    // Fetch edges from edge-service
+    const edges = await this.fetchEdges(map.id);
+
+    // Collect all unique imageIds from nodes
+    const allImageIds = new Set<string>();
+    activeNodes.forEach(node => {
+      if (node.imageIds && Array.isArray(node.imageIds)) {
+        node.imageIds.forEach((id: string) => allImageIds.add(id));
+      }
+    });
+    console.log('[EXPORT] Collected imageIds from nodes:', Array.from(allImageIds));
+
+    // Fetch media for all imageIds
+    const media = await this.fetchMedia(Array.from(allImageIds));
+    console.log('[EXPORT] Fetched media from media-service:', media.length, 'items');
+    console.log('[EXPORT] Media details:', media);
+
+    // Build export object
+    const exportData = {
+      version: '1.0',
+      exportedAt: new Date().toISOString(),
+      map: {
+        id: map.id,
+        name: map.name,
+        description: map.description,
+        viewport: map.viewport,
+        createdAt: map.createdAt,
+        updatedAt: map.updatedAt
+      },
+      nodes: activeNodes.map(this.sanitizeNode),
+      edges: edges.map(this.sanitizeEdge),
+      media: media.map(this.sanitizeMedia)
+    };
+
+    console.log('[EXPORT] Final export media count:', exportData.media.length);
+    console.log('[EXPORT] Final export media:', exportData.media);
+
+    return exportData;
+  }
+
+  /**
    * Get complete concept map data for sharing
    * Returns JSON export format
    */
@@ -175,12 +234,15 @@ export class ShareService {
         node.imageIds.forEach((id: string) => allImageIds.add(id));
       }
     });
+    console.log('[EXPORT] Collected imageIds from nodes:', Array.from(allImageIds));
 
     // Fetch media for all imageIds
     const media = await this.fetchMedia(Array.from(allImageIds));
+    console.log('[EXPORT] Fetched media from media-service:', media.length, 'items');
+    console.log('[EXPORT] Media details:', media);
 
     // Build export object
-    return {
+    const exportData = {
       version: '1.0',
       exportedAt: new Date().toISOString(),
       map: {
@@ -195,6 +257,11 @@ export class ShareService {
       edges: edges.map(this.sanitizeEdge),
       media: media.map(this.sanitizeMedia)
     };
+
+    console.log('[EXPORT] Final export media count:', exportData.media.length);
+    console.log('[EXPORT] Final export media:', exportData.media);
+
+    return exportData;
   }
 
   /**
@@ -242,9 +309,14 @@ export class ShareService {
     if (mediaIds.length === 0) return [];
 
     try {
+      console.log('[EXPORT] Fetching media for IDs:', mediaIds);
+      console.log('[EXPORT] Calling:', `${MEDIA_SERVICE_URL}/bulk?ids=${mediaIds.join(',')}`);
+
       const response = await axios.get(`${MEDIA_SERVICE_URL}/bulk`, {
         params: { ids: mediaIds.join(',') }
       });
+
+      console.log('[EXPORT] Media service response:', response.data);
       return response.data.media || [];
     } catch (error) {
       console.error('Failed to fetch media:', error);

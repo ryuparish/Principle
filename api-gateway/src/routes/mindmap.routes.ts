@@ -43,6 +43,34 @@ router.post('/import', async (req: Request, res: Response) => {
   }
 });
 
+// Export concept map to JSON (must come before /:id)
+router.get('/:id/export', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const response = await axios.get(`${services.nodeService}/mindmaps/${id}/export`);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error exporting concept map:', error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data?.error || 'Failed to export concept map'
+    });
+  }
+});
+
+// Apply auto-layout to concept map using ELKjs
+router.post('/:id/layout', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const response = await axios.post(`${services.nodeService}/mindmaps/${id}/layout`, req.body);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error applying layout:', error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data?.error || 'Failed to apply layout'
+    });
+  }
+});
+
 // Get mindmap by ID (with nodes)
 router.get('/:id', async (req: Request, res: Response) => {
   try {

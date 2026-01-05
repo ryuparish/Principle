@@ -20,7 +20,8 @@ export type NodeShape =
   | 'actor'
   | 'document'
   | 'queue'
-  | 'storage';
+  | 'storage'
+  | 'portal';
 
 export interface ShapeConfig {
   name: string;
@@ -143,5 +144,14 @@ export const SHAPE_CONFIGS: Record<NodeShape, ShapeConfig> = {
     useSvg: true,
     cssClass: 'shape-svg',
     contentClass: 'storage-content'
+  },
+  'portal': {
+    name: 'Portal',
+    description: 'Cross-map portal',
+    category: 'flow',
+    handles: { top: true, right: true, bottom: true, left: true },
+    useSvg: true,
+    cssClass: 'shape-svg shape-portal',
+    contentClass: 'portal-content'
   }
 };

@@ -4,8 +4,9 @@ import { Media } from './entities/Media';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Determine database path
-const dbPath = process.env.DATABASE_URL?.replace('file:', '') || './dev.db';
+// Determine database path - MUST match the node-service database where MCP server writes
+const dbPath = process.env.DATABASE_URL?.replace('file:', '') ||
+  '/Users/ryuparish/Code/Principle/node-service/dev.db';
 const absoluteDbPath = path.resolve(dbPath);
 
 // Check if database exists AND has content (not just an empty file)

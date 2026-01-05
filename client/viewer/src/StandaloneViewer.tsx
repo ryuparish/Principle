@@ -11,12 +11,26 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import PublicViewerNode from '@/components/Node/PublicViewerNode';
 import PublicNodeViewerModal from '@/components/Node/PublicNodeViewerModal';
+import { EdgesProvider } from '@/contexts/EdgesContext';
+import {
+  SpreadBezierEdge,
+  SpreadStraightEdge,
+  SpreadStepEdge,
+  SpreadSmoothStepEdge,
+} from '@/components/Edge/SpreadEdge';
 import '@/pages/PublicViewer.css';
 import '@/styles/index.css';
 import { ConceptMapNode } from '@/types';
 
 const nodeTypes = {
   custom: PublicViewerNode,
+};
+
+const edgeTypes = {
+  spread: SpreadBezierEdge,
+  'spread-straight': SpreadStraightEdge,
+  'spread-step': SpreadStepEdge,
+  'spread-smoothstep': SpreadSmoothStepEdge,
 };
 
 const StandaloneViewer: React.FC = () => {
@@ -45,15 +59,51 @@ const StandaloneViewer: React.FC = () => {
     },
   }));
 
-  const edges: Edge[] = data.edges.map((edge: any) => ({
+  // Convert edges to context format for SpreadEdge
+  const edgesForContext = data.edges.map((edge: any) => ({
     id: edge.id,
-    source: edge.sourceNodeId,
-    target: edge.targetNodeId,
-    sourceHandle: edge.sourceHandleId,
-    targetHandle: edge.targetHandleId,
-    label: edge.label,
-    style: edge.style,
+    sourceNodeId: edge.sourceNodeId,
+    targetNodeId: edge.targetNodeId,
+    sourceHandleId: edge.sourceHandleId,
+    targetHandleId: edge.targetHandleId,
   }));
+
+  const edges: Edge[] = data.edges.map((edge: any) => {
+    const style = edge.style || {};
+    const strokeColor = style.strokeColor || '#b1b1b7';
+
+    // Map path types to spread edge types
+    const pathType = style.type || 'default';
+    let edgeType: string;
+    switch (pathType) {
+      case 'straight':
+        edgeType = 'spread-straight';
+        break;
+      case 'step':
+        edgeType = 'spread-step';
+        break;
+      case 'smoothstep':
+        edgeType = 'spread-smoothstep';
+        break;
+      default:
+        edgeType = 'spread';
+    }
+
+    return {
+      id: edge.id,
+      source: edge.sourceNodeId,
+      target: edge.targetNodeId,
+      sourceHandle: edge.sourceHandleId,
+      targetHandle: edge.targetHandleId,
+      label: edge.label,
+      type: edgeType,
+      style: {
+        stroke: strokeColor,
+        strokeWidth: style.strokeWidth || 2,
+        strokeDasharray: style.strokeDasharray,
+      },
+    };
+  });
 
   const downloadJSON = () => {
     const json = JSON.stringify(data, null, 2);
@@ -68,63 +118,66 @@ const StandaloneViewer: React.FC = () => {
 
   return (
     <ReactFlowProvider>
-      <div className="public-viewer">
-        <div className="public-viewer-header">
-          <div className="public-viewer-title">
-            <h1>{data.map.name}</h1>
-            {data.map.description && <p>{data.map.description}</p>}
+      <EdgesProvider edges={edgesForContext}>
+        <div className="public-viewer">
+          <div className="public-viewer-header">
+            <div className="public-viewer-title">
+              <h1>{data.map.name}</h1>
+              {data.map.description && <p>{data.map.description}</p>}
+            </div>
+            <button
+              onClick={downloadJSON}
+              style={{
+                padding: '8px 16px',
+                background: '#0066cc',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 500,
+              }}
+            >
+              📄 Export JSON
+            </button>
+            <div className="public-viewer-badge">
+              👁️ Standalone Viewer
+            </div>
           </div>
-          <button
-            onClick={downloadJSON}
-            style={{
-              padding: '8px 16px',
-              background: '#0066cc',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 500,
-            }}
-          >
-            📄 Export JSON
-          </button>
-          <div className="public-viewer-badge">
-            👁️ Standalone Viewer
+
+          <div className="public-viewer-canvas">
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
+              defaultViewport={data.map.viewport}
+              connectionMode={ConnectionMode.Loose}
+              fitView
+              attributionPosition="bottom-left"
+              proOptions={{ hideAttribution: true }}
+            >
+              <Background />
+              <Controls />
+              <MiniMap />
+            </ReactFlow>
           </div>
-        </div>
 
-        <div className="public-viewer-canvas">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={nodeTypes}
-            defaultViewport={data.map.viewport}
-            connectionMode={ConnectionMode.Loose}
-            fitView
-            attributionPosition="bottom-left"
-            proOptions={{ hideAttribution: true }}
-          >
-            <Background />
-            <Controls />
-            <MiniMap />
-          </ReactFlow>
-        </div>
+          <div className="public-viewer-footer">
+            <small>
+              Exported {new Date(data.exportedAt).toLocaleString()} •
+              {nodes.length} node{nodes.length !== 1 ? 's' : ''} •
+              {edges.length} edge{edges.length !== 1 ? 's' : ''} •
+              Standalone HTML Viewer
+            </small>
+          </div>
 
-        <div className="public-viewer-footer">
-          <small>
-            Exported {new Date(data.exportedAt).toLocaleString()} •
-            {nodes.length} node{nodes.length !== 1 ? 's' : ''} •
-            {edges.length} edge{edges.length !== 1 ? 's' : ''} •
-            Standalone HTML Viewer
-          </small>
+          <PublicNodeViewerModal
+            node={selectedNode}
+            onClose={() => setSelectedNode(null)}
+          />
         </div>
-
-        <PublicNodeViewerModal
-          node={selectedNode}
-          onClose={() => setSelectedNode(null)}
-        />
-      </div>
+      </EdgesProvider>
     </ReactFlowProvider>
   );
 };

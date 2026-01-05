@@ -19,6 +19,7 @@ export const useKeyboardHandler = () => {
   const { executeCommand } = useVimCommands();
   const { addToast } = useToastStore();
   const { getNode } = useReactFlow();
+  const { nodes: storeNodes, edges, updateEdge } = useConceptMapStore();
 
   // Check if event target is an editable element
   const isEditableElement = useCallback((target: EventTarget | null): boolean => {
@@ -270,7 +271,7 @@ export const useKeyboardHandler = () => {
 
         if (sourceId && targetId && sourceId !== targetId) {
           // Create edge using operations hook
-          operations.createEdgeOperation(sourceId, targetId, getNode);
+          await operations.createEdgeOperation(sourceId, targetId, getNode);
         }
         vim.exitEdgeMode();
         return;
@@ -427,10 +428,69 @@ export const useKeyboardHandler = () => {
         }
         return;
       }
+
+      // t - edit type of selected edge
+      if (vimKey.key === 't' && !vimKey.ctrl && !vimKey.meta) {
+        const { edgeIds, selectedIndex } = vim.state.edgeEditMode;
+        if (selectedIndex >= 0 && selectedIndex < edgeIds.length) {
+          const edgeId = edgeIds[selectedIndex];
+          vim.openEdgeTypeSelector(edgeId);
+        }
+        return;
+      }
+
+      // a - toggle arrows on/off for selected edge
+      if (vimKey.key === 'a' && !vimKey.ctrl && !vimKey.meta) {
+        const { edgeIds, selectedIndex } = vim.state.edgeEditMode;
+        if (selectedIndex >= 0 && selectedIndex < edgeIds.length) {
+          const edgeId = edgeIds[selectedIndex];
+          const edge = edges.find(e => e.id === edgeId);
+          if (edge) {
+            const currentMarkerEnd = edge.style?.markerEnd;
+            const newMarkerEnd = currentMarkerEnd === 'none' ? 'arrow' : 'none';
+            updateEdge(edgeId, {
+              style: { ...edge.style, markerEnd: newMarkerEnd }
+            });
+          }
+        }
+        return;
+      }
+
+      // m - toggle animation on/off for selected edge
+      if (vimKey.key === 'm' && !vimKey.ctrl && !vimKey.meta) {
+        const { edgeIds, selectedIndex } = vim.state.edgeEditMode;
+        if (selectedIndex >= 0 && selectedIndex < edgeIds.length) {
+          const edgeId = edgeIds[selectedIndex];
+          const edge = edges.find(e => e.id === edgeId);
+          if (edge) {
+            const currentAnimated = edge.style?.animated || false;
+            updateEdge(edgeId, {
+              style: { ...edge.style, animated: !currentAnimated }
+            });
+          }
+        }
+        return;
+      }
     }
 
     // OPERATIONS (Normal mode)
     if (vim.state.mode === 'normal') {
+      // Number keys for count prefix (e.g., 3p for paste 3 times)
+      if (/^[1-9]$/.test(vimKey.key) && !vimKey.ctrl && !vimKey.meta && !vim.state.operatorPending) {
+        const digit = parseInt(vimKey.key, 10);
+        const newCount = vim.state.pendingCount * 10 + digit;
+        vim.state.pendingCount = newCount;
+        vim.appendCommandBuffer(vimKey.key);
+
+        // Auto-clear count after timeout
+        setTimeout(() => {
+          if (vim.state.pendingCount === newCount) {
+            vim.clearCommandBuffer();
+          }
+        }, 2000);
+        return;
+      }
+
       // Operator-pending mode: handle graph objects after operator
       if (vim.state.operatorPending) {
         const operator = vim.state.operatorPending;
@@ -513,16 +573,26 @@ export const useKeyboardHandler = () => {
         return;
       }
 
-      if (vimKey.key === 'y' && !vimKey.ctrl && !vimKey.meta && !vim.state.operatorPending) {
-        vim.setOperatorPending('y');
-        vim.appendCommandBuffer('y');
-        // Auto-clear after timeout
-        setTimeout(() => {
-          if (vim.state.commandBuffer === 'y') {
-            vim.clearCommandBuffer();
-          }
-        }, 2000);
-        return;
+      if (vimKey.key === 'y' && !vimKey.ctrl && !vimKey.meta) {
+        // Check for yy (double-tap y to yank focused node)
+        if (vim.state.commandBuffer === 'y' && vim.state.operatorPending === 'y') {
+          operations.yankFocusedNode();
+          vim.clearCommandBuffer();
+          return;
+        }
+
+        // First y press - set operator pending
+        if (!vim.state.operatorPending) {
+          vim.setOperatorPending('y');
+          vim.appendCommandBuffer('y');
+          // Auto-clear after timeout
+          setTimeout(() => {
+            if (vim.state.commandBuffer === 'y') {
+              vim.clearCommandBuffer();
+            }
+          }, 2000);
+          return;
+        }
       }
 
       if (vimKey.key === 'c' && !vimKey.ctrl && !vimKey.meta && !vim.state.operatorPending) {
@@ -546,13 +616,29 @@ export const useKeyboardHandler = () => {
 
       // p - paste
       if (vimKey.key === 'p' && !vimKey.ctrl && !vimKey.meta) {
-        await operations.pasteOperation(false);
+        const count = vim.state.pendingCount || 1;
+
+        // Show shape selector if pasting multiple copies
+        if (count > 1) {
+          vim.openPasteShapeSelector(count, false);
+        } else {
+          await operations.pasteOperation(false, count, 'grid');
+        }
+        vim.clearCommandBuffer();
         return;
       }
 
       // P - paste as connected
       if (vimKey.key === 'P' && vimKey.shift && !vimKey.ctrl && !vimKey.meta) {
-        await operations.pasteOperation(true);
+        const count = vim.state.pendingCount || 1;
+
+        // Show shape selector if pasting multiple copies
+        if (count > 1) {
+          vim.openPasteShapeSelector(count, true);
+        } else {
+          await operations.pasteOperation(true, count, 'grid');
+        }
+        vim.clearCommandBuffer();
         return;
       }
 
@@ -595,6 +681,25 @@ export const useKeyboardHandler = () => {
           vim.openTagInput();
         }
         vim.clearCommandBuffer();
+        return;
+      }
+
+      // Enter - follow portal (when on a portal node)
+      if (vimKey.key === 'Enter' && !vimKey.ctrl && !vimKey.meta) {
+        if (!vim.state.focusedNodeId) return;
+
+        const focusedNode = storeNodes.find(n => n.id === vim.state.focusedNodeId);
+        if (focusedNode?.nodeType === 'portal' && focusedNode.portalTargetMapId) {
+          // Navigate through the portal
+          const { navigateThroughPortal, loadConceptMap } = useConceptMapStore.getState();
+
+          navigateThroughPortal(focusedNode, async (mapId: string, targetNodeId?: string) => {
+            await loadConceptMap(mapId);
+            if (targetNodeId) {
+              setTimeout(() => vim.setFocus(targetNodeId), 100);
+            }
+          });
+        }
         return;
       }
     }
@@ -694,6 +799,26 @@ export const useKeyboardHandler = () => {
         return;
       }
 
+      // gp - create portal from focused node
+      if (vim.state.commandBuffer === 'g' && vimKey.key === 'p') {
+        if (!vim.state.focusedNodeId) {
+          console.log('[PORTAL] No focused node');
+          vim.clearCommandBuffer();
+          return;
+        }
+        vim.openPortalCreator();
+        vim.clearCommandBuffer();
+        return;
+      }
+
+      // gl - open layout options selector
+      if (vim.state.commandBuffer === 'g' && vimKey.key === 'l') {
+        console.log('[VIM] Opening layout options selector');
+        vim.openLayoutOptionsSelector();
+        vim.clearCommandBuffer();
+        return;
+      }
+
       // G - jump to last
       if (vimKey.key === 'G' && vimKey.shift) {
         navigation.jumpToLast();
@@ -754,7 +879,7 @@ export const useKeyboardHandler = () => {
       }
     }
 
-  }, [vim, navigation, operations, executeCommand, addToast, isEditableElement, createVimKeyEvent]);
+  }, [vim, navigation, operations, executeCommand, addToast, isEditableElement, createVimKeyEvent, storeNodes, edges, updateEdge, getNode]);
 
   // Attach keyboard event listener
   useEffect(() => {

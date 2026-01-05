@@ -16,6 +16,7 @@ export interface CreateMediaInput {
 
 export class MediaService {
   private mediaRepository = AppDataSource.getRepository(Media);
+  private nodeServiceUrl = process.env.NODE_SERVICE_URL || 'http://localhost:3001';
 
   async createMedia(data: CreateMediaInput): Promise<Media> {
     // Get image dimensions
@@ -38,7 +39,43 @@ export class MediaService {
     });
 
     // Save to database
-    return await this.mediaRepository.save(media);
+    const savedMedia = await this.mediaRepository.save(media);
+
+    // If nodeId provided, update the node's imageIds array
+    if (data.nodeId) {
+      await this.updateNodeImageIds(data.nodeId, savedMedia.id);
+    }
+
+    return savedMedia;
+  }
+
+  /**
+   * Update a node's imageIds array to include a new media ID
+   */
+  private async updateNodeImageIds(nodeId: string, mediaId: string): Promise<void> {
+    try {
+      // First, get the current node to get existing imageIds
+      const nodeResponse = await axios.get(`${this.nodeServiceUrl}/nodes/${nodeId}`);
+      const node = nodeResponse.data;
+
+      // Get current imageIds or empty array
+      const currentImageIds: string[] = node.imageIds || [];
+
+      // Add the new media ID if not already present
+      if (!currentImageIds.includes(mediaId)) {
+        const updatedImageIds = [...currentImageIds, mediaId];
+
+        // Update the node with new imageIds
+        await axios.patch(`${this.nodeServiceUrl}/nodes/${nodeId}`, {
+          imageIds: updatedImageIds
+        });
+
+        console.log(`[MEDIA] Updated node ${nodeId} imageIds:`, updatedImageIds);
+      }
+    } catch (error) {
+      // Log but don't fail the upload if node update fails
+      console.error(`[MEDIA] Failed to update node ${nodeId} imageIds:`, error);
+    }
   }
 
   async getMediaById(id: string): Promise<Media | null> {
@@ -55,12 +92,16 @@ export class MediaService {
   }
 
   async getMediaByIds(ids: string[]): Promise<Media[]> {
-    return await this.mediaRepository.find({
+    console.log('[MEDIA] getMediaByIds called with:', ids);
+    const result = await this.mediaRepository.find({
       where: {
         id: In(ids)
       },
       order: { createdAt: 'ASC' }
     });
+    console.log('[MEDIA] Found media records:', result.length);
+    console.log('[MEDIA] Media records:', result);
+    return result;
   }
 
   async updateMedia(id: string, data: { nodeId?: string }): Promise<Media> {
@@ -122,13 +163,20 @@ export class MediaService {
     width?: number;
     height?: number;
   }): Promise<Media> {
+    console.log('[MEDIA] importFromLocal called');
+    console.log('[MEDIA] New ID:', data.id);
+    console.log('[MEDIA] Source filename:', data.sourceFilename);
+
     const uploadDir = path.join(__dirname, '../../uploads');
     const sourcePath = path.join(uploadDir, data.sourceFilename);
+    console.log('[MEDIA] Source path:', sourcePath);
 
     // Check if source file exists
     try {
       await fs.access(sourcePath);
+      console.log('[MEDIA] Source file exists:', sourcePath);
     } catch (error) {
+      console.error('[MEDIA] Source file NOT found:', sourcePath);
       const err: any = new Error('Source file not found');
       err.statusCode = 404;
       throw err;
@@ -137,13 +185,16 @@ export class MediaService {
     // Generate new filenames
     const ext = path.extname(data.sourceFilename);
     const newFilename = `${data.id}_${Date.now()}${ext}`;
-    const newThumbnail = `${data.id}_${Date.now()}_thumb${ext}`;
+    const newThumbnail = `${data.id}_${Date.now()}-thumb${ext}`;
+    console.log('[MEDIA] Generated new filename:', newFilename);
+    console.log('[MEDIA] Generated thumbnail name:', newThumbnail);
 
     const destPath = path.join(uploadDir, newFilename);
     const destThumbnailPath = path.join(uploadDir, newThumbnail);
 
     // Copy files
     await fs.copyFile(sourcePath, destPath);
+    console.log('[MEDIA] Copied source file:', sourcePath, '→', destPath);
 
     if (data.sourceThumbnail) {
       const sourceThumbnailPath = path.join(uploadDir, data.sourceThumbnail);
@@ -152,10 +203,12 @@ export class MediaService {
       } catch (error) {
         console.warn('Failed to copy thumbnail, generating new one');
         await storageService.generateThumbnail(newFilename);
+        console.log('[MEDIA] Generated thumbnail:', newThumbnail);
       }
     } else {
       // Generate thumbnail if not provided
       await storageService.generateThumbnail(newFilename);
+      console.log('[MEDIA] Generated thumbnail:', newThumbnail);
     }
 
     // Get file size
@@ -181,7 +234,13 @@ export class MediaService {
       thumbnailUrl: `/media/${newThumbnail}`
     });
 
-    return await this.mediaRepository.save(media);
+    console.log('[MEDIA] Saving Media record to database');
+    console.log('[MEDIA] Media record:', media);
+
+    const savedMedia = await this.mediaRepository.save(media);
+    console.log('[MEDIA] Successfully saved Media record:', savedMedia.id);
+
+    return savedMedia;
   }
 
   /**

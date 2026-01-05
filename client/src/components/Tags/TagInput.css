@@ -1,47 +1,49 @@
 /* TagInput Container */
 .tag-input-container {
   position: relative;
-  width: 100%;
+  width: auto;
 }
 
-/* Input Wrapper */
+/* Input Wrapper - Compact */
 .tag-input-wrapper {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  border: 1px solid var(--theme-nodeBorder);
-  border-radius: 0.375rem;
-  background-color: var(--theme-nodeBackground);
-  min-height: 2.5rem;
+  gap: 4px;
+  padding: 2px 4px;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  background-color: #ffffff;
+  min-height: 24px;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 .tag-input-wrapper:focus-within {
-  border-color: var(--theme-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 10%, transparent);
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
   outline: none;
 }
 
 /* Tags Container */
 .tag-input-tags {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
+  flex-wrap: nowrap;
+  gap: 4px;
 }
 
-/* Tag Chip */
+/* Tag Chip - Compact */
 .tag-input-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  background-color: var(--theme-primary);
-  color: var(--theme-nodeBackground);
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
+  gap: 2px;
+  padding: 1px 5px;
+  background-color: #0066cc;
+  color: #ffffff;
+  border-radius: 2px;
+  font-size: 10px;
   font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: background-color 0.15s ease-in-out;
 }
 
@@ -81,12 +83,12 @@
 
 /* Input Field */
 .tag-input-field {
-  flex: 1;
-  min-width: 120px;
-  padding: 0.25rem;
+  flex: 0 0 auto;
+  width: 50px;
+  padding: 1px 2px;
   border: none;
   background: transparent;
-  font-size: 0.875rem;
+  font-size: 11px;
   outline: none;
 }
 

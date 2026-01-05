@@ -1,0 +1,13 @@
+.edge-label {
+  background: rgba(245, 245, 247, 0.9);
+  color: #6b7280;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  border: 1px solid rgba(180, 180, 190, 0.4);
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  letter-spacing: 0.02em;
+}

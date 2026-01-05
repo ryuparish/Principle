@@ -104,7 +104,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
         )}
 
         {/* Image container */}
-        <div className="lightbox-image-container">
+        <div className="lightbox-image-container lightbox-scrollable">
           {isLoading && (
             <div className="lightbox-loader">
               <div className="spinner" />

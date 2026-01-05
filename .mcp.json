@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "principle": {
+      "command": "node",
+      "args": ["/Users/ryuparish/Code/Principle/mcp-server/dist/index.js"],
+      "env": {}
+    }
+  }
+}

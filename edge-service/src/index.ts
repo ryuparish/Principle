@@ -2,7 +2,7 @@ import 'reflect-metadata';  // MUST BE FIRST for TypeORM decorators
 import express, { Request, Response } from 'express';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { AppDataSource } from './data-source';
+import { AppDataSource, ensureEdgeColumns } from './data-source';
 import edgeRoutes from './routes/edge.routes';
 
 dotenv.config();
@@ -38,8 +38,11 @@ app.use('/edges', edgeRoutes);
 
 // Initialize TypeORM and start server
 AppDataSource.initialize()
-  .then(() => {
+  .then(async () => {
     console.log('✅ TypeORM connected to SQLite database');
+
+    // Ensure all required columns exist (handles schema drift when synchronize is false)
+    await ensureEdgeColumns();
 
     // Start server
     app.listen(PORT, () => {

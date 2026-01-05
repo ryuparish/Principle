@@ -39,7 +39,7 @@ export class EdgeController {
 
   async create(req: Request, res: Response) {
     try {
-      const { id, conceptMapId, sourceNodeId, targetNodeId, sourceHandleId, targetHandleId, label, style } = req.body;
+      const { id, conceptMapId, sourceNodeId, targetNodeId, label, style } = req.body;
 
       // Validation
       if (!conceptMapId) {
@@ -57,8 +57,6 @@ export class EdgeController {
         conceptMapId,
         sourceNodeId,
         targetNodeId,
-        sourceHandleId,
-        targetHandleId,
         label,
         style
       });
@@ -68,6 +66,36 @@ export class EdgeController {
     } catch (error) {
       console.error('Error creating edge:', error);
       res.status(500).json({ error: 'Failed to create edge' });
+    }
+  }
+
+  async batchCreate(req: Request, res: Response) {
+    try {
+      const { edges } = req.body;
+
+      if (!Array.isArray(edges) || edges.length === 0) {
+        return res.status(400).json({ error: 'edges array is required' });
+      }
+
+      // Validate each edge
+      for (let i = 0; i < edges.length; i++) {
+        const edge = edges[i];
+        if (!edge.conceptMapId) {
+          return res.status(400).json({ error: `edges[${i}]: conceptMapId is required` });
+        }
+        if (!edge.sourceNodeId) {
+          return res.status(400).json({ error: `edges[${i}]: sourceNodeId is required` });
+        }
+        if (!edge.targetNodeId) {
+          return res.status(400).json({ error: `edges[${i}]: targetNodeId is required` });
+        }
+      }
+
+      const createdEdges = await edgeService.batchCreateEdges(edges);
+      res.status(201).json({ edges: createdEdges });
+    } catch (error) {
+      console.error('Error batch creating edges:', error);
+      res.status(500).json({ error: 'Failed to batch create edges' });
     }
   }
 

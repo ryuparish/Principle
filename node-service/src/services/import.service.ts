@@ -20,19 +20,34 @@ export class ImportService {
   async importConceptMap(data: ConceptMapExport): Promise<ConceptMap> {
     // Validate data format
     this.validateImportData(data);
+    console.log('[IMPORT] Validated import data');
+    console.log('[IMPORT] Map name:', data.map.name);
+    console.log('[IMPORT] Nodes count:', data.nodes.length);
+    console.log('[IMPORT] Edges count:', data.edges.length);
+    console.log('[IMPORT] Media count:', data.media?.length || 0);
+    console.log('[IMPORT] Media data:', data.media);
 
     // Generate new IDs to avoid conflicts
     const idMapping = this.generateIdMapping(data);
     const mediaMapping = this.generateMediaMapping(data);
+    console.log('[IMPORT] Generated ID mappings');
+    console.log('[IMPORT] Node ID mappings:', Array.from(idMapping.entries()));
+    console.log('[IMPORT] Media ID mappings:', Array.from(mediaMapping.entries()));
 
     // Create the concept map
     const newMap = await this.createConceptMap(data, idMapping);
 
     // Create media BEFORE nodes (nodes reference media)
+    console.log('[IMPORT] Creating media for', data.media?.length || 0, 'items');
     await this.createMedia(data, mediaMapping, newMap.id);
 
     // Create nodes with new IDs and mapped media IDs
     await this.createNodes(data, idMapping, mediaMapping, newMap.id);
+    console.log('[IMPORT] Created nodes with mapped imageIds');
+
+    // Update media records with nodeId (now that nodes exist)
+    await this.updateMediaNodeIds(data, idMapping, mediaMapping);
+    console.log('[IMPORT] Updated media records with nodeIds');
 
     // Create edges with mapped IDs
     await this.createEdges(data, idMapping, newMap.id);
@@ -158,6 +173,7 @@ export class ImportService {
     newMapId: string
   ): Promise<void> {
     if (!data.media || data.media.length === 0) {
+      console.log('[IMPORT] No media to import');
       return; // No media to import
     }
 
@@ -169,6 +185,11 @@ export class ImportService {
         console.warn(`No mapping found for media ${media.id}`);
         continue;
       }
+
+      console.log('[IMPORT] Processing media:', media.id, '→', newMediaId);
+      console.log('[IMPORT] Media storageMode:', media.storageMode);
+      console.log('[IMPORT] Media filename:', media.filename);
+      console.log('[IMPORT] Media s3Url:', media.s3Url);
 
       try {
         if (media.storageMode === 's3' && media.s3Url) {
@@ -187,6 +208,8 @@ export class ImportService {
           console.warn(`Cannot import media ${media.id}: incompatible storage mode`);
         }
       } catch (error: any) {
+        console.error('[IMPORT] Failed to import media:', media.id, '→', newMediaId);
+        console.error('[IMPORT] Error details:', error.message);
         console.error(`Failed to import media ${media.id}:`, error.message);
         // Continue with other media even if one fails
       }
@@ -197,6 +220,19 @@ export class ImportService {
    * Import from local files (Local -> Local)
    */
   private async importFromLocal(newId: string, media: any): Promise<void> {
+    console.log('[IMPORT] Calling importFromLocal for media:', newId);
+    console.log('[IMPORT] Source filename:', media.filename);
+    console.log('[IMPORT] Calling:', `${MEDIA_SERVICE_URL}/import-local`);
+    console.log('[IMPORT] Request body:', {
+      id: newId,
+      sourceFilename: media.filename,
+      sourceThumbnail: media.thumbnailFilename,
+      originalName: media.originalName,
+      mimeType: media.mimeType,
+      width: media.width,
+      height: media.height
+    });
+
     await axios.post(`${MEDIA_SERVICE_URL}/import-local`, {
       id: newId,
       sourceFilename: media.filename,
@@ -249,6 +285,48 @@ export class ImportService {
       width: media.width,
       height: media.height
     });
+  }
+
+  /**
+   * Update media records with nodeId after nodes are created
+   * This allows the frontend to query media by nodeId
+   */
+  private async updateMediaNodeIds(
+    data: ConceptMapExport,
+    idMapping: Map<string, string>,
+    mediaMapping: Map<string, string>
+  ): Promise<void> {
+    console.log('[IMPORT] Updating media nodeIds...');
+
+    // Build a map of mediaId -> nodeId by looking at node.imageIds
+    const mediaToNodeMap = new Map<string, string>();
+
+    for (const node of data.nodes) {
+      const newNodeId = idMapping.get(node.id);
+      if (!newNodeId) continue;
+
+      // For each imageId in this node, map the NEW mediaId to the NEW nodeId
+      if (node.imageIds && Array.isArray(node.imageIds)) {
+        for (const oldMediaId of node.imageIds) {
+          const newMediaId = mediaMapping.get(oldMediaId);
+          if (newMediaId) {
+            mediaToNodeMap.set(newMediaId, newNodeId);
+            console.log('[IMPORT] Mapping media', newMediaId, 'to node', newNodeId);
+          }
+        }
+      }
+    }
+
+    // Update each media record with its nodeId
+    for (const [mediaId, nodeId] of mediaToNodeMap.entries()) {
+      try {
+        await axios.patch(`${MEDIA_SERVICE_URL}/${mediaId}`, { nodeId });
+        console.log('[IMPORT] Updated media', mediaId, 'with nodeId', nodeId);
+      } catch (error: any) {
+        console.error(`[IMPORT] Failed to update media ${mediaId}:`, error.message);
+        // Continue with other media even if one fails
+      }
+    }
   }
 
   /**

@@ -70,6 +70,36 @@ export class NodeController {
     }
   }
 
+  async batchCreate(req: Request, res: Response) {
+    try {
+      const { nodes } = req.body;
+
+      if (!Array.isArray(nodes) || nodes.length === 0) {
+        return res.status(400).json({ error: 'nodes array is required' });
+      }
+
+      // Validate each node
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        if (!node.conceptMapId) {
+          return res.status(400).json({ error: `nodes[${i}]: conceptMapId is required` });
+        }
+        if (!node.title || node.title.trim().length === 0) {
+          return res.status(400).json({ error: `nodes[${i}]: title is required` });
+        }
+        if (!node.position || typeof node.position.x !== 'number' || typeof node.position.y !== 'number') {
+          return res.status(400).json({ error: `nodes[${i}]: position with x and y coordinates is required` });
+        }
+      }
+
+      const createdNodes = await nodeService.batchCreateNodes(nodes);
+      res.status(201).json({ nodes: createdNodes });
+    } catch (error) {
+      console.error('Error batch creating nodes:', error);
+      res.status(500).json({ error: 'Failed to batch create nodes' });
+    }
+  }
+
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;

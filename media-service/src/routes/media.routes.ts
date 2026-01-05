@@ -30,6 +30,9 @@ router.get('/node/:nodeId', (req, res) => mediaController.getByNode(req, res));
 // Get media by ID (generic, must come after specific routes)
 router.get('/:id', (req, res) => mediaController.getById(req, res));
 
+// Update media (generic, must come after specific routes)
+router.patch('/:id', (req, res) => mediaController.update(req, res));
+
 // Delete media (generic, must come after specific routes)
 router.delete('/:id', (req, res) => mediaController.delete(req, res));
 

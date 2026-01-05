@@ -252,6 +252,32 @@ export const findLastNode = (nodes: Node[]): string | null => {
   return last.id;
 };
 
+/**
+ * Find the nearest node to a given position
+ * @param position - The reference position {x, y}
+ * @param nodes - Available nodes to search
+ * @returns The closest node ID, or null if no nodes available
+ */
+export const findNearestNode = (
+  position: { x: number; y: number },
+  nodes: ConceptMapNode[]
+): string | null => {
+  if (nodes.length === 0) return null;
+
+  let nearestNode: ConceptMapNode | null = null;
+  let minDistance = Infinity;
+
+  for (const node of nodes) {
+    const distance = euclideanDistance(position, node.position);
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearestNode = node;
+    }
+  }
+
+  return nearestNode?.id || null;
+};
+
 // Find parent nodes (nodes with edges pointing to current)
 export const findParentNodes = (
   currentNodeId: string,

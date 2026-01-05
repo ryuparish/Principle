@@ -100,8 +100,22 @@ export interface VimState {
   // Edge label editor state
   edgeLabelEditorId: string | null; // Edge ID whose label is being edited
 
+  // Edge type selector state
+  edgeTypeSelectorId: string | null; // Edge ID whose type is being edited
+
   // Tag input state
   tagInputOpen: boolean; // Whether tag input is open
+
+  // Paste shape selector state
+  pasteShapeSelectorOpen: boolean;
+  pasteCount: number;
+  pasteAsConnected: boolean;
+
+  // Portal creator state
+  portalCreatorOpen: boolean;
+
+  // Layout options selector state
+  layoutOptionsSelectorOpen: boolean;
 
   // Settings
   enabled: boolean; // Toggle vim mode on/off
@@ -147,7 +161,13 @@ export const createInitialVimState = (): VimState => ({
   lastOperation: null,
   editorNodeId: null,
   edgeLabelEditorId: null,
+  edgeTypeSelectorId: null,
   tagInputOpen: false,
+  pasteShapeSelectorOpen: false,
+  pasteCount: 1,
+  pasteAsConnected: false,
+  portalCreatorOpen: false,
+  layoutOptionsSelectorOpen: false,
   enabled: true
 });
 
@@ -195,7 +215,15 @@ export type VimAction =
   | { type: 'CLOSE_EDITOR' }
   | { type: 'OPEN_EDGE_LABEL_EDITOR'; edgeId: string }
   | { type: 'CLOSE_EDGE_LABEL_EDITOR' }
+  | { type: 'OPEN_EDGE_TYPE_SELECTOR'; edgeId: string }
+  | { type: 'CLOSE_EDGE_TYPE_SELECTOR' }
   | { type: 'OPEN_TAG_INPUT' }
   | { type: 'CLOSE_TAG_INPUT' }
+  | { type: 'OPEN_PASTE_SHAPE_SELECTOR'; count: number; asConnected: boolean }
+  | { type: 'CLOSE_PASTE_SHAPE_SELECTOR' }
+  | { type: 'OPEN_PORTAL_CREATOR' }
+  | { type: 'CLOSE_PORTAL_CREATOR' }
+  | { type: 'OPEN_LAYOUT_OPTIONS_SELECTOR' }
+  | { type: 'CLOSE_LAYOUT_OPTIONS_SELECTOR' }
   | { type: 'TOGGLE_ENABLED' }
   | { type: 'RESET' };

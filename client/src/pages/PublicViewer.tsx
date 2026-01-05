@@ -8,16 +8,31 @@ import ReactFlow, {
   MiniMap,
   ReactFlowProvider,
   ConnectionMode,
+  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { shareApi } from '../api/share.api';
 import { ConceptMapExport, ConceptMapNode } from '../types';
 import PublicViewerNode from '../components/Node/PublicViewerNode';
 import PublicNodeViewerModal from '../components/Node/PublicNodeViewerModal';
+import { EdgesProvider } from '../contexts/EdgesContext';
+import {
+  SpreadBezierEdge,
+  SpreadStraightEdge,
+  SpreadStepEdge,
+  SpreadSmoothStepEdge,
+} from '../components/Edge/SpreadEdge';
 import './PublicViewer.css';
 
 const nodeTypes = {
   custom: PublicViewerNode,
+};
+
+const edgeTypes = {
+  spread: SpreadBezierEdge,
+  'spread-straight': SpreadStraightEdge,
+  'spread-step': SpreadStepEdge,
+  'spread-smoothstep': SpreadSmoothStepEdge,
 };
 
 const PublicViewerInner: React.FC = () => {
@@ -94,59 +109,98 @@ const PublicViewerInner: React.FC = () => {
     },
   }));
 
-  const edges: Edge[] = data.edges.map((edge) => ({
+  // Convert edges to context format for SpreadEdge
+  const edgesForContext = data.edges.map((edge) => ({
     id: edge.id,
-    source: edge.sourceNodeId,
-    target: edge.targetNodeId,
-    sourceHandle: edge.sourceHandleId,
-    targetHandle: edge.targetHandleId,
-    label: edge.label,
-    style: edge.style,
+    sourceNodeId: edge.sourceNodeId,
+    targetNodeId: edge.targetNodeId,
+    sourceHandleId: edge.sourceHandleId,
+    targetHandleId: edge.targetHandleId,
   }));
 
+  const edges: Edge[] = data.edges.map((edge) => {
+    const style = edge.style || {};
+    const strokeColor = (style as any).strokeColor || '#b1b1b7';
+
+    // Map path types to spread edge types
+    const pathType = (style as any).type || 'default';
+    let edgeType: string;
+    switch (pathType) {
+      case 'straight':
+        edgeType = 'spread-straight';
+        break;
+      case 'step':
+        edgeType = 'spread-step';
+        break;
+      case 'smoothstep':
+        edgeType = 'spread-smoothstep';
+        break;
+      default:
+        edgeType = 'spread';
+    }
+
+    return {
+      id: edge.id,
+      source: edge.sourceNodeId,
+      target: edge.targetNodeId,
+      sourceHandle: edge.sourceHandleId,
+      targetHandle: edge.targetHandleId,
+      label: edge.label,
+      type: edgeType,
+      style: {
+        stroke: strokeColor,
+        strokeWidth: (style as any).strokeWidth || 2,
+        strokeDasharray: (style as any).strokeDasharray,
+      },
+    };
+  });
+
   return (
-    <div className="public-viewer">
-      <div className="public-viewer-header">
-        <div className="public-viewer-title">
-          <h1>{data.map.name}</h1>
-          {data.map.description && <p>{data.map.description}</p>}
+    <EdgesProvider edges={edgesForContext}>
+      <div className="public-viewer">
+        <div className="public-viewer-header">
+          <div className="public-viewer-title">
+            <h1>{data.map.name}</h1>
+            {data.map.description && <p>{data.map.description}</p>}
+          </div>
+          <div className="public-viewer-badge">
+            👁️ Read-only view
+          </div>
         </div>
-        <div className="public-viewer-badge">
-          👁️ Read-only view
+
+        <div className="public-viewer-canvas">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            defaultViewport={data.map.viewport}
+            connectionMode={ConnectionMode.Loose}
+            fitView
+            attributionPosition="bottom-left"
+            proOptions={{ hideAttribution: true }}
+          >
+            <Background />
+            <Controls />
+            <MiniMap />
+          </ReactFlow>
         </div>
-      </div>
 
-      <div className="public-viewer-canvas">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          defaultViewport={data.map.viewport}
-          connectionMode={ConnectionMode.Loose}
-          fitView
-          attributionPosition="bottom-left"
-          proOptions={{ hideAttribution: true }}
-        >
-          <Background />
-          <Controls />
-          <MiniMap />
-        </ReactFlow>
-      </div>
+        <div className="public-viewer-footer">
+          <small>
+            Shared {new Date(data.exportedAt).toLocaleString()} •
+            {nodes.length} node{nodes.length !== 1 ? 's' : ''} •
+            {edges.length} edge{edges.length !== 1 ? 's' : ''}
+          </small>
+        </div>
 
-      <div className="public-viewer-footer">
-        <small>
-          Shared {new Date(data.exportedAt).toLocaleString()} •
-          {nodes.length} node{nodes.length !== 1 ? 's' : ''} •
-          {edges.length} edge{edges.length !== 1 ? 's' : ''}
-        </small>
+        {/* Node viewer modal */}
+        <PublicNodeViewerModal
+          node={selectedNode}
+          onClose={() => setSelectedNode(null)}
+        />
       </div>
-
-      {/* Node viewer modal */}
-      <PublicNodeViewerModal
-        node={selectedNode}
-        onClose={() => setSelectedNode(null)}
-      />
-    </div>
+    </EdgesProvider>
   );
 };
 

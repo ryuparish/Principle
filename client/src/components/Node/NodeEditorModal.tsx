@@ -3,12 +3,15 @@ import ReactDOM from 'react-dom';
 import { ConceptMapNode, Media } from '../../types';
 import { NodeShape } from '../../types/shapes';
 import { useConceptMapStore } from "../../store/conceptMapStore";
+import { useWarmthStore } from '../../store/warmthStore';
 import TipTapEditor from '../Editor/TipTapEditor';
 import { ImageUploader } from '../ImageUploader/ImageUploader';
 import { ImageGallery } from '../ImageGallery/ImageGallery';
 import { ImageLightbox } from '../ImageLightbox/ImageLightbox';
 import { TagInput } from '../Tags/TagInput';
 import { ShapePicker } from './ShapePicker';
+import { AttachmentsSection } from '../Attachments/AttachmentsSection';
+import type { DriveAttachment, DriveFile } from '../../types/drive';
 import './NodeEditorModal.css';
 
 interface NodeEditorModalProps {
@@ -47,7 +50,11 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
   );
   const [tags, setTags] = useState<string[]>(node.tags || []);
   const [shape, setShape] = useState<NodeShape>((node.shape as NodeShape) || 'rounded-rectangle');
+  const [driveAttachments, setDriveAttachments] = useState<DriveAttachment[]>(
+    (node.content as any)?.driveAttachments || []
+  );
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -57,6 +64,7 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
   const contentRef = useRef(content);
   const tagsRef = useRef(tags);
   const shapeRef = useRef(shape);
+  const driveAttachmentsRef = useRef(driveAttachments);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const saveMessageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isSavingRef = useRef(false);
@@ -80,6 +88,10 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
   }, [shape]);
 
   useEffect(() => {
+    driveAttachmentsRef.current = driveAttachments;
+  }, [driveAttachments]);
+
+  useEffect(() => {
     updateNodeRef.current = updateNode;
   }, [updateNode]);
 
@@ -93,6 +105,7 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
     );
     setTags(node.tags || []);
     setShape((node.shape as NodeShape) || 'rounded-rectangle');
+    setDriveAttachments((node.content as any)?.driveAttachments || []);
   }, [node]);
 
   // Load media when modal opens
@@ -101,6 +114,14 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
       loadNodeMedia(node.id);
     }
   }, [isOpen, node.id, loadNodeMedia]);
+
+  // Record warmth interaction when modal opens
+  const { recordInteraction } = useWarmthStore();
+  useEffect(() => {
+    if (isOpen && node.id) {
+      recordInteraction(node.id);
+    }
+  }, [isOpen, node.id, recordInteraction]);
 
   // Completely stable save function - no dependencies that change
   const performSaveRef = useRef(async (showMessage = true) => {
@@ -111,9 +132,15 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
     setIsSaving(true);
     try {
       // Read from refs to get latest values
+      // Merge drive attachments into content
+      const contentWithAttachments = {
+        ...contentRef.current,
+        driveAttachments: driveAttachmentsRef.current
+      };
+
       await updateNodeRef.current(node.id, {
         title: titleRef.current,
-        content: contentRef.current,
+        content: contentWithAttachments,
         shape: shapeRef.current
       });
 
@@ -179,6 +206,7 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
 
   const handleImageUpload = async (file: File) => {
     try {
+      setUploadingImage(true);
       await uploadMedia(file, node.id);
       setSaveMessage('Image uploaded');
       setTimeout(() => setSaveMessage(null), 2000);
@@ -199,7 +227,39 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
 
       setSaveMessage(errorMessage);
       setTimeout(() => setSaveMessage(null), 5000);
+    } finally {
+      setUploadingImage(false);
     }
+  };
+
+  const handleDriveFilesAdd = (files: DriveFile[]) => {
+    // Convert DriveFile to DriveAttachment and add to state
+    const newAttachments: DriveAttachment[] = files.map(file => ({
+      id: file.id,
+      name: file.name,
+      mimeType: file.mimeType,
+      iconUrl: file.iconLink || '',
+      thumbnailUrl: file.thumbnailLink,
+      webViewLink: file.webViewLink || `https://drive.google.com/file/d/${file.id}/view`,
+      size: file.size ? parseInt(file.size) : undefined,
+      createdAt: file.createdTime || new Date().toISOString()
+    }));
+
+    // Filter out duplicates
+    setDriveAttachments(prev => {
+      const existingIds = new Set(prev.map(a => a.id));
+      const uniqueNew = newAttachments.filter(a => !existingIds.has(a.id));
+      return [...prev, ...uniqueNew];
+    });
+
+    setSaveMessage('Drive files attached');
+    setTimeout(() => setSaveMessage(null), 2000);
+  };
+
+  const handleDriveFileRemove = (attachmentId: string) => {
+    setDriveAttachments(prev => prev.filter(a => a.id !== attachmentId));
+    setSaveMessage('Attachment removed');
+    setTimeout(() => setSaveMessage(null), 2000);
   };
 
   const handleImageUploadError = (error: string) => {
@@ -257,7 +317,7 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
         saveTimeoutRef.current = null;
       }
     };
-  }, [title, content, shape, performSave]);
+  }, [title, content, shape, driveAttachments, performSave]);
 
   if (!isOpen) return null;
 
@@ -269,63 +329,55 @@ const NodeEditorModal: React.FC<NodeEditorModalProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="modal-header">
-            <input
-              type="text"
-              className="node-title-input"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Node Title"
-              autoFocus
-            />
-            <div className="modal-actions">
+            <div className="header-row">
+              <input
+                type="text"
+                className="node-title-input"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Node Title"
+                autoFocus
+              />
               <button className="close-button" onClick={handleClose}>
                 ✕
               </button>
             </div>
+            <div className="header-meta-row">
+              <ShapePicker
+                currentShape={shape}
+                onShapeSelect={setShape}
+              />
+              <div className="header-tags">
+                <TagInput
+                  nodeId={node.id}
+                  currentTags={tags}
+                  onTagsChange={setTags}
+                  placeholder="+ tag"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="modal-body">
+            {/* Main editor */}
             <TipTapEditor
               content={content}
               onChange={setContent}
               placeholder="Write your notes here..."
             />
 
-            <div className="metadata-row">
-              <div className="tags-section">
-                <label className="tags-label">Tags:</label>
-                <TagInput
-                  nodeId={node.id}
-                  currentTags={tags}
-                  onTagsChange={setTags}
-                  placeholder="Add tags..."
-                />
-              </div>
-
-              <div className="shape-section">
-                <label className="shape-label">Shape:</label>
-                <ShapePicker
-                  currentShape={shape}
-                  onShapeSelect={setShape}
-                />
-              </div>
-
-              <div className="images-section">
-                <span className="images-label">Images:</span>
-                <ImageUploader
-                  nodeId={node.id}
-                  onUploadSuccess={handleImageUpload}
-                  onUploadError={handleImageUploadError}
-                />
-                {nodeMedia.length > 0 && (
-                  <ImageGallery
-                    media={nodeMedia}
-                    onImageClick={handleImageClick}
-                    onImageDelete={handleImageDelete}
-                    showDelete={true}
-                  />
-                )}
-              </div>
+            {/* Attachments section */}
+            <div className="attachments-panel">
+              <AttachmentsSection
+                images={nodeMedia}
+                onImageUpload={handleImageUpload}
+                onImageDelete={handleImageDelete}
+                onImageClick={handleImageClick}
+                uploadingImage={uploadingImage}
+                driveAttachments={driveAttachments}
+                onDriveFilesAdd={handleDriveFilesAdd}
+                onDriveFileRemove={handleDriveFileRemove}
+              />
             </div>
           </div>
 
