@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ConceptMap, ConceptMapNode, ConceptMapEdge, UpdateEdgeInput, Media } from '../types';
+import { ConceptMap, ConceptMapNode, ConceptMapEdge, UpdateEdgeInput, Media, CORENodeType } from '../types';
 import { conceptMapApi } from '../api/conceptMap.api';
 import { nodeApi } from '../api/node.api';
 import { edgeApi } from '../api/edge.api';
@@ -22,7 +22,7 @@ interface ConceptMapStore {
   updateConceptMap: (id: string, data: Partial<ConceptMap>) => Promise<void>;
   deleteConceptMap: (id: string) => Promise<void>;
 
-  createNode: (title: string, position: { x: number; y: number }) => Promise<ConceptMapNode>;
+  createNode: (title: string, position: { x: number; y: number }, nodeType?: CORENodeType) => Promise<ConceptMapNode>;
   updateNode: (id: string, data: Partial<ConceptMapNode>) => Promise<void>;
   updateNodeLocal: (id: string, data: Partial<ConceptMapNode>) => void;
   deleteNode: (id: string) => Promise<void>;
@@ -115,7 +115,7 @@ export const useConceptMapStore = create<ConceptMapStore>((set, get) => ({
     }
   },
 
-  createNode: async (title: string, position: { x: number; y: number }) => {
+  createNode: async (title: string, position: { x: number; y: number }, nodeType?: CORENodeType) => {
     const { currentConceptMap } = get();
     if (!currentConceptMap) {
       throw new Error('No concept map selected');
@@ -125,8 +125,9 @@ export const useConceptMapStore = create<ConceptMapStore>((set, get) => ({
       const node = await nodeApi.create({
         conceptMapId: currentConceptMap.id,
         title,
-        position
-      });
+        position,
+        ...(nodeType ? { nodeType } : {})
+      } as any);
       set((state) => ({
         nodes: [...state.nodes, node]
       }));

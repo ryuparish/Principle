@@ -4,7 +4,8 @@ import { PositionUpdateMessage, QueueStatus } from '../types';
 
 const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379');
-const NODE_SERVICE_URL = process.env.NODE_SERVICE_URL || 'http://localhost:3001';
+// Route through the API gateway which translates to CORE graph_service
+const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:3000';
 
 // Create Bull queue
 export const positionQueue = new Queue<PositionUpdateMessage>('position-updates', {
@@ -19,8 +20,8 @@ positionQueue.process(1, async (job) => {
   const { nodeId, position } = job.data;
 
   try {
-    // Call node-service to update position in database
-    await axios.patch(`${NODE_SERVICE_URL}/nodes/${nodeId}`, {
+    // Call API gateway to update position (gateway translates to CORE graph_service)
+    await axios.patch(`${API_GATEWAY_URL}/api/nodes/${nodeId}`, {
       position
     });
 

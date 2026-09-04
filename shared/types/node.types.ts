@@ -1,3 +1,17 @@
+// CORE node types
+export type CORENodeType =
+  | 'jot'
+  | 'concept'
+  | 'entity'
+  | 'relation'
+  | 'context'
+  | 'problem'
+  | 'task'
+  | 'event'
+  | 'theme'
+  | 'insight'
+  | 'graph_container';
+
 export interface Position {
   x: number;
   y: number;
@@ -28,6 +42,7 @@ export interface Node {
   style: NodeStyle;
   imageIds: string[];
   tags: string[];
+  nodeType: CORENodeType;
   isDeleted: boolean;
   deletedAt?: Date;
   createdAt: Date;

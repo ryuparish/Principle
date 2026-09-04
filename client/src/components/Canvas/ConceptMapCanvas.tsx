@@ -31,9 +31,10 @@ const nodeTypes = {
 
 interface ConceptMapCanvasProps {
   conceptMapId: string;
+  onOpenNodeDetail?: (nodeId: string) => void;
 }
 
-const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }) => {
+const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId, onOpenNodeDetail }) => {
   const {
     nodes: storeNodes,
     edges: storeEdges,
@@ -285,6 +286,16 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [selectedNodeIds, deleteNodes]);
 
+  // Handle double-click on node to open detail page
+  const onNodeDoubleClick = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      if (onOpenNodeDetail) {
+        onOpenNodeDetail(node.id);
+      }
+    },
+    [onOpenNodeDetail]
+  );
+
   // Handle canvas click to create new node
   const onPaneClick = useCallback(
     async (event: React.MouseEvent) => {
@@ -315,6 +326,7 @@ const ConceptMapCanvasInner: React.FC<ConceptMapCanvasProps> = ({ conceptMapId }
         onConnect={onConnect}
         onEdgesDelete={onEdgesDelete}
         onEdgeContextMenu={onEdgeContextMenu}
+        onNodeDoubleClick={onNodeDoubleClick}
         onPaneClick={onPaneClick}
         onSelectionChange={onSelectionChange}
         nodeTypes={nodeTypes}

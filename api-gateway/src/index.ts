@@ -30,8 +30,8 @@ app.get('/health', (req: Request, res: Response) => {
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {
   res.json({
-    message: 'Principle API Gateway',
-    version: '1.0.0',
+    message: 'Principle API Gateway (CORE-backed)',
+    version: '2.0.0',
     endpoints: {
       health: '/health',
       mindmaps: '/api/mindmaps',
